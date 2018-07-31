@@ -1,13 +1,32 @@
 package io.upblockchain.worker
 
+import io.upblockchain.common._
+import com.google.inject.Guice
+
 import akka.actor.ActorSystem
-import io.upblockchain.worker.services.CalculatorActor
 import akka.actor.Props
-import com.typesafe.config.ConfigFactory
+import akka.cluster.client.ClusterClientReceptionist
+import io.upblockchain.worker.modules.ServiceModule
+import io.upblockchain.worker.services.CalculatorActor
+import akka.stream.ActorMaterializer
+import io.upblockchain.worker.client.GethClient
 
 object Main extends App {
 
-  implicit val system = ActorSystem("CalculatorSystem", ConfigFactory.load())
-  system.actorOf(Props[CalculatorActor], "calculator")
+  val injector = Guice.createInjector(ServiceModule)
+  implicit val system = injector.getInstance(classOf[ActorSystem])
+  implicit val mat = injector.getInstance(classOf[ActorMaterializer])
+
+  val serviceA = injector.getActor("GethActor")
+  ClusterClientReceptionist(system).registerService(serviceA)
+
+  println(logo)
+
+  lazy val logo = """
+   _       __           __            
+  | |     / /___  _____/ /_____  _____
+  | | /| / / __ \/ ___/ //_/ _ \/ ___/
+  | |/ |/ / /_/ / /  / ,< /  __/ /    
+  |__/|__/\____/_/  /_/|_|\___/_/     """
 
 }
