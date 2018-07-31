@@ -1,11 +1,13 @@
-package io.upblockchain.worker.services
+package io.upblockchain.root.services
 
 import akka.actor._
 import akka.cluster.Cluster
 import akka.cluster.ClusterEvent._
 
 class SimpleClusterListener extends Actor with ActorLogging {
+
   val cluster = Cluster(context.system)
+
   override def preStart(): Unit = {
     cluster.subscribe(self, initialStateMode = InitialStateAsEvents,
                       classOf[MemberEvent], classOf[UnreachableMember])
@@ -21,6 +23,7 @@ class SimpleClusterListener extends Actor with ActorLogging {
       log.info(
         "Member is Removed: {} after {}",
         member.address, previousStatus)
+
     case _: MemberEvent ⇒ // ignore
   }
 }

@@ -10,6 +10,8 @@ import akka.actor.ActorRef
 import javax.inject.Named
 import akka.cluster.client.ClusterClient
 import akka.cluster.client.ClusterClientSettings
+import com.typesafe.config.Config
+import com.typesafe.config.ConfigFactory
 
 trait ServiceModule extends BaseModule {
 
@@ -17,6 +19,9 @@ trait ServiceModule extends BaseModule {
     //    bind[GethClient]
     bind[EthJsonRPCService]
   }
+
+  @Provides @Singleton
+  def provideConfig: Config = ConfigFactory load
 
   @Provides @Singleton
   def provideActorSystem: ActorSystem = ActorSystem("RootSystem")
@@ -28,6 +33,11 @@ trait ServiceModule extends BaseModule {
   def provideClusterPros(@Inject() sys: ActorSystem): ActorRef = {
     sys.actorOf(ClusterClient.props(ClusterClientSettings(sys)), "cluster_client")
   }
+
+//  @Provides @Singleton @Named("SimpleClusterListener")
+//  def provideClusterListener(@Inject() sys: ActorSystem): ActorRef = {
+//    sys.actorOf(Props[SimpleClusterListener], "SimpleClusterListener")
+//  }
 
 }
 

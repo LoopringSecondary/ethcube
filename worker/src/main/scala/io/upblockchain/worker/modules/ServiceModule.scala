@@ -11,6 +11,7 @@ import javax.inject.{ Inject, Named }
 import akka.actor.Props
 import io.upblockchain.worker.services.GethEthereumActor
 import akka.actor.ActorRef
+import io.upblockchain.worker.services.SimpleClusterListener
 
 trait ServiceModule extends BaseModule {
 
@@ -28,8 +29,13 @@ trait ServiceModule extends BaseModule {
   def provideActorMaterializer(@Inject() sys: ActorSystem): ActorMaterializer = ActorMaterializer()(sys)
 
   @Provides @Singleton @Named("GethActor")
-  def provideMyActor(@Inject() sys: ActorSystem, mat: ActorMaterializer, client: GethClient): ActorRef = {
+  def provideGethActor(@Inject() sys: ActorSystem, mat: ActorMaterializer, client: GethClient): ActorRef = {
     sys.actorOf(Props(new GethEthereumActor(client)(sys, mat)))
+  }
+
+  @Provides @Singleton @Named("ClusterListener")
+  def provideClusterListener(@Inject() sys: ActorSystem): ActorRef = {
+    sys.actorOf(Props[SimpleClusterListener], "ClusterListener")
   }
 
 }

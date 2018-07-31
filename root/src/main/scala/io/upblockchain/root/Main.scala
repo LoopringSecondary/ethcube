@@ -3,10 +3,11 @@ package io.upblockchain.root
 import com.google.inject.Guice
 
 import akka.actor.ActorSystem
-import io.upblockchain.root.modules.ServiceModule
-import io.upblockchain.root.routees.RootRoute
 import akka.http.scaladsl.Http
 import akka.stream.ActorMaterializer
+import io.upblockchain.root.modules._
+import io.upblockchain.root.routees.RootRoute
+import com.typesafe.config.Config
 
 object Main extends App {
 
@@ -14,10 +15,13 @@ object Main extends App {
 
   implicit val system = injector.getInstance(classOf[ActorSystem])
   implicit val mat = injector.getInstance(classOf[ActorMaterializer])
-  
 
   val r = injector.getInstance(classOf[RootRoute])
-  Http().bindAndHandle(r(), "localhost", 8080)
+  val config = injector.getInstance(classOf[Config])
+
+  Http().bindAndHandle(r(), config.getString("http.interface"), config.getInt("http.port"))
+
+  println(logo)
 
   lazy val logo = """
       ____              __ 
