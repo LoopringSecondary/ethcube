@@ -1,6 +1,6 @@
 .DS_Store
 .settings/
-project/
+project/project/
 target/
 bin/
 .tmpBin/
