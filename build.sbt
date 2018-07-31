@@ -5,13 +5,23 @@ import Settings._
 import Dependencies._
 
 lazy val proto = (project in file("proto"))
-  .enablePlugins(AkkaGrpcPlugin)
+  // .enablePlugins(AkkaGrpcPlugin)
   .settings(
+    libraryDependencies ++= Seq(
+      "com.thesamet.scalapb" %% "scalapb-runtime" % scalapb.compiler.Version.scalapbVersion,
+      "com.thesamet.scalapb" %% "scalapb-runtime" % scalapb.compiler.Version.scalapbVersion % "protobuf"
+      // "com.thesamet.scalapb" %% "scalapb-runtime" % scalapb.compiler.Version.scalapbVersion
+
+    ),
     // libraryDependencies ++= commonDependency
     // other settings
 
     // enablePlugins(AkkaGrpcPlugin)
     // baseDirectory.value
+
+    PB.targets in Compile := Seq(
+      scalapb.gen() -> (sourceManaged in Compile).value
+    )
 
     // PB.protoSources in Compile := Seq(
     //   // baseDirectory.value

@@ -16,7 +16,6 @@ import com.typesafe.config.ConfigFactory
 trait ServiceModule extends BaseModule {
 
   override def configure: Unit = {
-    //    bind[GethClient]
     bind[EthJsonRPCService]
   }
 

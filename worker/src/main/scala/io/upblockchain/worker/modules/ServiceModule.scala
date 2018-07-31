@@ -30,7 +30,7 @@ trait ServiceModule extends BaseModule {
 
   @Provides @Singleton @Named("GethActor")
   def provideGethActor(@Inject() sys: ActorSystem, mat: ActorMaterializer, client: GethClient): ActorRef = {
-    sys.actorOf(Props(new GethEthereumActor(client)(sys, mat)))
+    sys.actorOf(Props(new GethEthereumActor(client)(sys, mat)), "GethActor")
   }
 
   @Provides @Singleton @Named("ClusterListener")
