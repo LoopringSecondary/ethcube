@@ -10,7 +10,7 @@
 
 ## Root节点
 
-Root 节点使用Akka Http对外提供Restful接口, 这里不做数据缓存, 直接利用Akka Cluster技术向worker节点发送请求, 得到数据之后直接返回
+Root 节点使用Akka Http对外提供Restful接口, 这里不做数据缓存, 直接利用Akka Cluster技术向worker节点发送请求, 得到数据之后直接返回。
 
 ## Worker节点
 
@@ -19,5 +19,9 @@ Worker 节点对外是以Actor调用, 参数是以protobuf定义, Worker 节点�
 
 
 
-# 
+# 功能
+
+1. 提供以太坊API
+2. 客户端管理(状态, 延时, 同步等)
+
 
