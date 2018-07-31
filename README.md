@@ -19,9 +19,32 @@ Worker 节点对外是以Actor调用, 参数是以protobuf定义, Worker 节点�
 
 # 运行
 
+以下命令都是在工程路径下面执行
+
+## 编译
+
+```
+sbt clean compile
+```
+
 ## eclipse 编译
 
+```
 sbt clean compile eclipse
+```
+
+## Root 运行
+
+```
+sbt root/run
+```
+
+## Worker 运行
+
+```
+sbt worker/run
+```
+
 
 
 # 功能
