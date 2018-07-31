@@ -17,6 +17,13 @@ Root 节点使用Akka Http对外提供Restful接口, 这里不做数据缓存, �
 Worker 节点对外是以Actor调用, 参数是以protobuf定义, Worker 节点可以多部署, 由Root节点随机访问, 做均衡请求处理。
 
 
+# 运行
+
+## eclipse 编译
+
+sbt clean compile eclipse
+
+
 # 功能
 
 1. 提供以太坊API

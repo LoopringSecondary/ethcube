@@ -34,10 +34,10 @@ trait ServiceModule extends BaseModule {
     sys.actorOf(ClusterClient.props(ClusterClientSettings(sys)), "cluster_client")
   }
 
-//  @Provides @Singleton @Named("SimpleClusterListener")
-//  def provideClusterListener(@Inject() sys: ActorSystem): ActorRef = {
-//    sys.actorOf(Props[SimpleClusterListener], "SimpleClusterListener")
-//  }
+  //  @Provides @Singleton @Named("SimpleClusterListener")
+  //  def provideClusterListener(@Inject() sys: ActorSystem): ActorRef = {
+  //    sys.actorOf(Props[SimpleClusterListener], "SimpleClusterListener")
+  //  }
 
 }
 
