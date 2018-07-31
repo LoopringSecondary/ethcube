@@ -11,22 +11,18 @@ import akka.http.scaladsl.model.HttpResponse
 import akka.http.scaladsl.model.HttpEntity
 import akka.util.ByteString
 import io.upblockchain.common.json.JsonSupport
+import io.upblockchain.proto.jsonrpc._
+import io.upblockchain.root.services.EthJsonRPCService
 
-class RootRoute @Inject() (eth: EthJsonRPCRoute) extends JsonSupport {
+class RootRoute @Inject() (service: EthJsonRPCService) extends JsonSupport {
 
   def apply(): Route = {
-    index // ~ eth()
-  }
-
-  def index: Route = {
     pathEndOrSingleSlash {
-      complete(OkResponse("Ok"))
-      //{"status: "ok"}
-      // val entity = HttpEntity(ContentTypes.`application/json`, ByteString("""{"status: "ok"}"""))
-      // complete(HttpResponse(status = StatusCodes.OK, entity = entity))
+      entity(as[JsonRPCRequest]) { req ⇒
+        onSuccess(service.handleClientRequest(req)) { resp ⇒
+          complete(resp)
+        }
+      }
     }
   }
-
 }
-
-case class OkResponse(status: String = "Ok")

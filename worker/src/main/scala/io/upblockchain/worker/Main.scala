@@ -7,7 +7,6 @@ import akka.actor.ActorSystem
 import akka.actor.Props
 import akka.cluster.client.ClusterClientReceptionist
 import io.upblockchain.worker.modules.ServiceModule
-import io.upblockchain.worker.services.CalculatorActor
 import akka.stream.ActorMaterializer
 import io.upblockchain.worker.client.GethClient
 
