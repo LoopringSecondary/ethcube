@@ -38,6 +38,13 @@ trait ServiceModule extends BaseModule {
     sys.actorOf(Props[SimpleClusterListener], "ClusterListener")
   }
 
+  @Provides @Singleton
+  def provideEthClientConfig(@Inject() config: Config): EthClientConfig = {
+    EthClientConfig(config.getString("eth.host"), config.getInt("eth.port"), config.getBoolean("eth.ssl"))
+  }
+
 }
 
 object ServiceModule extends ServiceModule
+
+case class EthClientConfig(host: String, port: Int, ssl: Boolean = false)

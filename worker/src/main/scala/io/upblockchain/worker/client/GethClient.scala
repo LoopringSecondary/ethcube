@@ -18,15 +18,17 @@ import scala.util.Success
 import scala.util.Failure
 import scala.concurrent.Future
 import akka.stream.QueueOfferResult
+import io.upblockchain.worker.modules.EthClientConfig
 
-class GethClient @Inject() (system: ActorSystem, materilizer: ActorMaterializer) {
+class GethClient @Inject() (system: ActorSystem, materilizer: ActorMaterializer, eth: EthClientConfig) {
 
   import system.dispatcher
 
   val poolClientFlow: Flow[(HttpRequest, Promise[HttpResponse]), (Try[HttpResponse], Promise[HttpResponse]), Http.HostConnectionPool] = {
-    // TODO(Toan) 这里的https, host和port需要配置化,
-    Http()(system).cachedHostConnectionPool[Promise[HttpResponse]](host = "192.168.0.200", port = 8545)
-    // Http()(system).cachedHostConnectionPoolHttps[Promise[HttpResponse]]("192.168.0.200", 8545)
+    eth.ssl match {
+      case true ⇒ Http()(system).cachedHostConnectionPoolHttps[Promise[HttpResponse]](host = eth.host, port = eth.port)
+      case _    ⇒ Http()(system).cachedHostConnectionPool[Promise[HttpResponse]](host = eth.host, port = eth.port)
+    }
   }
 
   // TODO(Toan) 下面的东西还需要优化一下

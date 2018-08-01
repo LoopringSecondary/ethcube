@@ -5,13 +5,11 @@ import akka.actor.ActorSystem
 import scala.concurrent.Future
 import akka.util.Timeout
 import scala.concurrent.duration._
-import akka.cluster.client.ClusterClient
-import akka.cluster.client.ClusterClientSettings
+import akka.cluster.client._
 import akka.pattern.ask
 import javax.inject.Named
 import akka.actor.ActorRef
-import io.upblockchain.proto.jsonrpc.JsonRPCRequest
-import io.upblockchain.proto.jsonrpc.JsonRPCResponse
+import io.upblockchain.common.model._
 
 class EthJsonRPCService @Inject() (@Named("ClusterClient") cluster: ActorRef) {
 
