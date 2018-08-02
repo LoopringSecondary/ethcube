@@ -19,12 +19,11 @@ class GethEthereumActor(client: GethClient)(implicit system: ActorSystem, mat: A
 
   def receive: Actor.Receive = {
     case req: JsonRPCRequest ⇒
-      // TODO(Toan):  这里的result是 Any 类型的 不能自动映射, 需要修改程序
+
+      //      HttpRequest(method, uri, headers, entity)
       val result = for {
         reqEntity ← Marshal(req).to[RequestEntity]
         httpResp ← client.handleRequest(HttpRequest(method = HttpMethods.POST, entity = reqEntity))
-        //        x ← Unmarshal(httpResp.entity).to[String]
-        //        _ = println("xxxx===>>>" + x)
         jsonResp ← Unmarshal(httpResp).to[JsonRPCResponse]
       } yield jsonResp
       result pipeTo sender
