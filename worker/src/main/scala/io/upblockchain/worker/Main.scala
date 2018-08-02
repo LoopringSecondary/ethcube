@@ -5,20 +5,12 @@ import java.util.concurrent.TimeUnit
 import io.upblockchain.common._
 import com.google.inject.Guice
 import akka.actor.ActorSystem
-import akka.actor.Props
 import akka.cluster.client.ClusterClientReceptionist
-import io.upblockchain.worker.modules.ServiceModule
+import io.upblockchain.worker.modules.{ GethIpcConfig, ServiceModule }
 import akka.stream.ActorMaterializer
 import akka.util.Timeout
-import com.google.protobuf.ByteString
-import com.google.protobuf.any.Any
-import io.upblockchain.common.model.{ JsonRPCRequest, JsonRPCResponse }
 import io.upblockchain.worker.services.StatsMonitor
-
-import scala.collection.mutable
-import scala.util.Success
-//import io.upblockchain.worker.client.GethClient
-import akka.pattern.ask
+import scala.reflect.io.Path
 
 object Main extends App {
   import scala.concurrent.ExecutionContext.Implicits.global
@@ -28,6 +20,12 @@ object Main extends App {
   implicit val system = injector.getInstance(classOf[ActorSystem])
   implicit val mat = injector.getInstance(classOf[ActorMaterializer])
 
+  val gethIpcConfig = injector.getInstance(classOf[GethIpcConfig])
+  val path: Path = Path(gethIpcConfig.ipcPath)
+  if (!path.exists) {
+    println(gethIpcConfig.ipcPath, "not exists")
+    system.terminate()
+  }
   val clientRouter = injector.getActor("ClientRouter")
   ClusterClientReceptionist(system).registerService(clientRouter)
 
