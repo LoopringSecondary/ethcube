@@ -1,21 +1,12 @@
 package io.upblockchain.worker.services
 
-import java.io.{BufferedReader, File, InputStreamReader, PrintWriter}
+import java.io.{ BufferedReader, File, InputStreamReader, PrintWriter }
 
-import akka.actor.{Actor, ActorSystem, Props}
-import akka.http.scaladsl.marshalling.{Marshal, Marshaller, ToByteStringMarshaller, ToEntityMarshaller}
-import akka.http.scaladsl.model.MediaTypes.`text/event-stream`
-import akka.http.scaladsl.model.{HttpEntity, RequestEntity}
-import akka.http.scaladsl.model.sse.ServerSentEvent
+import akka.actor.{ Actor, ActorLogging, ActorSystem, Props }
 import akka.stream.ActorMaterializer
-import akka.stream.scaladsl.Source
 import io.upblockchain.common.json.JsonSupport
-import io.upblockchain.proto.jsonrpc.JsonRPCRequest
-import javax.inject.Inject
-import jnr.unixsocket.{UnixSocket, UnixSocketAddress, UnixSocketChannel}
-import io.upblockchain.common.model._
-
-import scala.concurrent.Future
+import io.upblockchain.common.model.{ JsonRPCRequest, JsonRPCResponse }
+import jnr.unixsocket.{ UnixSocket, UnixSocketAddress, UnixSocketChannel }
 
 /*
 
@@ -35,31 +26,38 @@ import scala.concurrent.Future
 
 */
 
-class GethIpcRoutee(system: ActorSystem, materilizer: ActorMaterializer) extends Actor with JsonSupport {
+class GethIpcRoutee(implicit system: ActorSystem, materilizer: ActorMaterializer) extends Actor with ActorLogging with JsonSupport {
   import scala.concurrent.ExecutionContext.Implicits.global
-  println("#######GethIpcRouteeGethIpcRouteeGethIpcRoutee")
-  var address = new UnixSocketAddress(new File("/Users/yuhongyu/myeth_new/data/geth.ipc"))
-  private val channel = UnixSocketChannel.open(address)
-  var unixSocket = new UnixSocket(channel)
-  var w = new PrintWriter(unixSocket.getOutputStream)
-  var br = new BufferedReader(new InputStreamReader(unixSocket.getInputStream))
+
+  val address = new UnixSocketAddress(new File("/Users/yuhongyu/myeth_new/data/geth.ipc"))
+  val channel = UnixSocketChannel.open(address)
+  val unixSocket = new UnixSocket(channel)
+  val w = new PrintWriter(unixSocket.getOutputStream)
+  val br = new BufferedReader(new InputStreamReader(unixSocket.getInputStream))
   var requestId = 0
+
+  import org.json4s.jackson.Serialization._
   def receive: Actor.Receive = {
     case req: JsonRPCRequest =>
-      requestId += 1
-//      var reqJsonStr = Marshal(req).to[]
-//      println("reqJsonStrreqJsonStrreqJsonStrreqJsonStr", reqJsonStr)
-      //id需要替换 count--id
-      var reqJson = """[{"method":"eth_blockNumber","params":[],"id":"aaa","jsonrpc":"2.0"}]"""
+      requestId = requestId + 1
+      val reqJson = write(req.copy(id = requestId + "-" + req.id))
       w.println(reqJson)
       w.flush()
       var line = br.readLine()
-      sender() ! line
+      val res = read[JsonRPCResponse](line).copy(id = req.id)
+      sender() ! res
+    case reqs: List[JsonRPCRequest] =>
+      val reqJson = write(reqs.map(req => req.copy(id = requestId + "-" + req.id)))
+      w.println(reqJson)
+      w.flush()
+      var line = br.readLine()
+      val res = read[List[JsonRPCResponse]](line)
+      sender() ! res.zipWithIndex.map(r => r._1.copy(id = reqs(r._2).id))
     case _ =>
   }
 
 }
 
 object GethIpcRoutee {
-  def props(system: ActorSystem, materilizer: ActorMaterializer) = Props(new GethIpcRoutee(system, materilizer))
+  def props(implicit system: ActorSystem, materilizer: ActorMaterializer) = Props(new GethIpcRoutee())
 }

@@ -3,7 +3,7 @@ package io.upblockchain.worker.services
 import akka.actor.{ Actor, ActorSystem, OneForOneStrategy, SupervisorStrategy }
 import akka.routing.{ DefaultResizer, RoundRobinPool }
 import akka.stream.ActorMaterializer
-import io.upblockchain.proto.jsonrpc.JsonRPCRequest
+import io.upblockchain.common.model.JsonRPCRequest
 
 /*
 
@@ -34,11 +34,13 @@ class ClientRouter()(implicit system: ActorSystem, mat: ActorMaterializer) exten
     lowerBound = 2, upperBound = 50, pressureThreshold = 1, rampupRate = 1, backoffRate = 0.25, backoffThreshold = 0.25, messagesPerResize = 1)
   private val router = system.actorOf(
     RoundRobinPool(nrOfInstances = 2, resizer = Some(resizer), supervisorStrategy = routerSupervisorStrategy)
-      .props(GethIpcRoutee.props(system, mat)), "roundrobin-pool-router")
+      .props(GethIpcRoutee.props), "roundrobin-pool-router")
 
   def receive: Actor.Receive = {
     case req: JsonRPCRequest =>
       router forward req
+    case reqs: List[JsonRPCRequest] =>
+      router forward reqs
     case _ ⇒
   }
 }
