@@ -34,8 +34,8 @@ trait ServiceModule extends BaseModule {
   }
 
   @Provides @Singleton @Named("ClientRouter")
-  def provideClientRouter(implicit sys: ActorSystem, mat: ActorMaterializer): ActorRef = {
-    sys.actorOf(Props(new ClientRouter("/Users/yuhongyu/myeth_new/data/geth.ipc")(sys, mat)), "ClientRouter")
+  def provideClientRouter(@Inject() gethConfig: GethIpcConfig, sys: ActorSystem, mat: ActorMaterializer): ActorRef = {
+    sys.actorOf(Props(new ClientRouter(gethConfig.ipcPath)(sys, mat)), "ClientRouter")
   }
 
   //  @Provides @Singleton @Named("ClusterListener")
@@ -48,8 +48,15 @@ trait ServiceModule extends BaseModule {
     EthClientConfig(config.getString("eth.host"), config.getInt("eth.port"), config.getBoolean("eth.ssl"))
   }
 
+  @Provides @Singleton
+  def provideGethIpcConfig(@Inject() config: Config): GethIpcConfig = {
+    GethIpcConfig(config.getString("geth.ipcpath"))
+  }
+
 }
 
 object ServiceModule extends ServiceModule
 
 case class EthClientConfig(host: String, port: Int, ssl: Boolean = false)
+
+case class GethIpcConfig(ipcPath: String)
