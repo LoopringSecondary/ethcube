@@ -12,7 +12,7 @@ import akka.http.scaladsl.model.HttpEntity
 import akka.util.ByteString
 import io.upblockchain.common.json.JsonSupport
 import io.upblockchain.root.services.EthJsonRPCService
-import io.upblockchain.common.model.JsonRPCRequest
+import io.upblockchain.proto.jsonrpc.JsonRPCRequest
 
 class RootRoute @Inject() (service: EthJsonRPCService) extends JsonSupport {
 
@@ -20,7 +20,8 @@ class RootRoute @Inject() (service: EthJsonRPCService) extends JsonSupport {
     pathEndOrSingleSlash {
       entity(as[JsonRPCRequest]) { req ⇒
         onSuccess(service.handleClientRequest(req)) { resp ⇒
-          complete(resp)
+          // TODO(Toan) 这里应该做 application/json 处理 还没做测试
+          complete(HttpEntity(ContentTypes.`application/json`, resp.resp))
         }
       }
     }

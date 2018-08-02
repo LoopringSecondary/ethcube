@@ -8,22 +8,15 @@ import "google/protobuf/any.proto";
 
 // The request message containing the user's name.
 message JsonRPCRequest {
-  string jsonrpc = 1;
-  string method = 2;
-  google.protobuf.Any params = 3;
-  int32 id = 4;
+  string req = 1;
 }
 
 // The response message containing the greetings
 message JsonRPCResponse {
-  int32 id = 1;
-  string jsonrpc = 2;
-  google.protobuf.Any result = 3;
-  JsonRPCError error = 4;
+  string resp = 1;
 }
 
-message JsonRPCError {
-  int32 code = 1;
-  string message = 2;
-  string data = 3;
+message JsonRPCRequestSeq {
+  repeated JsonRPCRequest req = 1;
 }
+

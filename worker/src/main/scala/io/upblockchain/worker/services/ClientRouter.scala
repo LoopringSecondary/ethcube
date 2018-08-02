@@ -3,7 +3,6 @@ package io.upblockchain.worker.services
 import akka.actor.{ Actor, ActorSystem, OneForOneStrategy, SupervisorStrategy }
 import akka.routing.{ DefaultResizer, RoundRobinPool }
 import akka.stream.ActorMaterializer
-import io.upblockchain.common.model.JsonRPCRequest
 
 /*
 
@@ -23,10 +22,11 @@ import io.upblockchain.common.model.JsonRPCRequest
 
 */
 import scala.concurrent.duration._
+import io.upblockchain.proto.jsonrpc._
 
 class ClientRouter(ipcPath: String)(implicit system: ActorSystem, mat: ActorMaterializer) extends Actor {
   val routingDecider: PartialFunction[Throwable, SupervisorStrategy.Directive] = {
-    case _: Exception => SupervisorStrategy.Restart
+    case _: Exception ⇒ SupervisorStrategy.Restart
   }
   val routerSupervisorStrategy = OneForOneStrategy(maxNrOfRetries = 5, withinTimeRange = 5 seconds)(
     routingDecider.orElse(SupervisorStrategy.defaultDecider))
@@ -37,9 +37,9 @@ class ClientRouter(ipcPath: String)(implicit system: ActorSystem, mat: ActorMate
       .props(GethIpcRoutee.props(ipcPath)), "client-router")
 
   def receive: Actor.Receive = {
-    case req: JsonRPCRequest =>
+    case req: JsonRPCRequest ⇒
       router forward req
-    case reqs: List[JsonRPCRequest] =>
+    case reqs: JsonRPCRequestSeq ⇒
       router forward reqs
     case _ ⇒
   }
