@@ -34,7 +34,7 @@ class ClientRouter(ipcPath: String)(implicit system: ActorSystem, mat: ActorMate
     lowerBound = 2, upperBound = 50, pressureThreshold = 1, rampupRate = 1, backoffRate = 0.25, backoffThreshold = 0.25, messagesPerResize = 1)
   private val router = system.actorOf(
     RoundRobinPool(nrOfInstances = 2, resizer = Some(resizer), supervisorStrategy = routerSupervisorStrategy)
-      .props(GethIpcRoutee.props(ipcPath)), "roundrobin-pool-router")
+      .props(GethIpcRoutee.props(ipcPath)), "client-router")
 
   def receive: Actor.Receive = {
     case req: JsonRPCRequest =>
