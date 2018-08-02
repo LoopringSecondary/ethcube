@@ -12,7 +12,7 @@ import akka.http.scaladsl.model.HttpEntity
 import akka.util.ByteString
 import io.upblockchain.common.json.JsonSupport
 import io.upblockchain.root.services.EthJsonRPCService
-import io.upblockchain.common.model.JsonRPCRequest
+import io.upblockchain.proto.jsonrpc.JsonRPCRequest
 
 class RootRoute @Inject() (service: EthJsonRPCService) extends JsonSupport {
 

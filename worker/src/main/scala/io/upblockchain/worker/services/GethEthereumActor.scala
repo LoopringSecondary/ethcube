@@ -10,7 +10,7 @@ import io.upblockchain.common.json.JsonSupport
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.pattern.pipe
-import io.upblockchain.common.model._
+import io.upblockchain.proto.jsonrpc._
 
 class GethEthereumActor(client: GethClient)(implicit system: ActorSystem, mat: ActorMaterializer) extends Actor with JsonSupport {
 
@@ -19,8 +19,6 @@ class GethEthereumActor(client: GethClient)(implicit system: ActorSystem, mat: A
 
   def receive: Actor.Receive = {
     case req: JsonRPCRequest ⇒
-
-      //      HttpRequest(method, uri, headers, entity)
       val result = for {
         reqEntity ← Marshal(req).to[RequestEntity]
         httpResp ← client.handleRequest(HttpRequest(method = HttpMethods.POST, entity = reqEntity))

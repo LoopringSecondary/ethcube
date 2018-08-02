@@ -1,11 +1,29 @@
 package io.upblockchain.common
 
-package object model {
+import io.upblockchain.proto.jsonrpc._
+import org.json4s.native.Serialization._
+import io.upblockchain.common.json.JsonSupport
+import org.json4s.native.JsonMethods._
 
-  case class JsonRPCRequest(jsonrpc: String = "2.0", method: String, params: Any, id: Any)
+package object model extends JsonSupport {
 
-  case class JsonRPCError(code: Int, message: String, data: String)
+  def toJsonRPCRequestWrapped(req: JsonRPCRequest): JsonRPCRequestWrapped = {
+    parse(req.req).extract[JsonRPCRequestWrapped]
+  }
 
-  case class JsonRPCResponse(id: Any, jsonrpc: String, result: Option[Any] = None, error: Option[JsonRPCError] = None)
+  case class JsonRPCRequestWrapped(jsonrpc: String = "2.0", method: String, params: Any, id: Any) {
+
+    def toRequest: JsonRPCRequest = {
+      JsonRPCRequest(write(this))
+    }
+  }
+
+  case class JsonRPCErrorWrapped(code: Int, message: String, data: String)
+
+  case class JsonRPCResponseWrapped(id: Any, jsonrpc: String, result: Option[Any] = None, error: Option[JsonRPCErrorWrapped] = None) {
+
+    def toResponse: JsonRPCResponse = JsonRPCResponse(write(this))
+
+  }
 
 }
