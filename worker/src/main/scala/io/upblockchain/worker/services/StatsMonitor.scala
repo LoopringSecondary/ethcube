@@ -1,6 +1,6 @@
 package io.upblockchain.worker.services
 
-import akka.actor.{ Actor, ActorRef, ActorSystem, Address, Props }
+import akka.actor.{ Actor, ActorLogging, ActorRef, ActorSystem, Address, Props }
 import com.google.inject.name.Named
 import io.upblockchain.common.model.{ JsonRPCRequest, JsonRPCResponse }
 import akka.pattern.ask
@@ -25,7 +25,7 @@ import akka.util.Timeout
 */
 import scala.concurrent.duration._
 
-class StatsMonitor(clientRouter: ActorRef)(implicit system: ActorSystem, materilizer: ActorMaterializer, timeout: Timeout) extends Actor {
+class StatsMonitor(clientRouter: ActorRef)(implicit system: ActorSystem, materilizer: ActorMaterializer, timeout: Timeout) extends Actor with ActorLogging {
 
   import context.dispatcher
   context.system.scheduler.schedule(1 seconds, 2 seconds, self, CollectReq())
