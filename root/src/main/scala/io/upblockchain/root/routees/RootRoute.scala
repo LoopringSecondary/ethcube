@@ -20,7 +20,8 @@ class RootRoute @Inject() (service: EthJsonRPCService) extends JsonSupport {
     pathEndOrSingleSlash {
       entity(as[JsonRPCRequest]) { req ⇒
         onSuccess(service.handleClientRequest(req)) { resp ⇒
-          complete(resp)
+          // TODO(Toan) 这里应该做 application/json 处理 还没做测试
+          complete(HttpEntity(ContentTypes.`application/json`, resp.resp))
         }
       }
     }

@@ -45,7 +45,7 @@ class StatsMonitor(clientRouter: ActorRef)(implicit system: ActorSystem, materil
       }
     }
     case req: String ⇒
-    case _           ⇒
+    case _ ⇒
   }
 }
 
