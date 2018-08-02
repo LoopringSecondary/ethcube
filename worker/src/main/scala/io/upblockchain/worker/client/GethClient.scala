@@ -27,7 +27,7 @@ class GethClient @Inject() (system: ActorSystem, materilizer: ActorMaterializer,
   val poolClientFlow: Flow[(HttpRequest, Promise[HttpResponse]), (Try[HttpResponse], Promise[HttpResponse]), Http.HostConnectionPool] = {
     eth.ssl match {
       case true ⇒ Http()(system).cachedHostConnectionPoolHttps[Promise[HttpResponse]](host = eth.host, port = eth.port)
-      case _    ⇒ Http()(system).cachedHostConnectionPool[Promise[HttpResponse]](host = eth.host, port = eth.port)
+      case _ ⇒ Http()(system).cachedHostConnectionPool[Promise[HttpResponse]](host = eth.host, port = eth.port)
     }
   }
 
@@ -37,14 +37,14 @@ class GethClient @Inject() (system: ActorSystem, materilizer: ActorMaterializer,
       .via(poolClientFlow)
       .toMat(Sink.foreach({
         case (Success(resp), p) ⇒ p.success(resp)
-        case (Failure(e), p)    ⇒ p.failure(e)
+        case (Failure(e), p) ⇒ p.failure(e)
       }))(Keep.left).run()(materilizer)
 
   def handleRequest(request: HttpRequest): Future[HttpResponse] = {
     val responsePromise = Promise[HttpResponse]()
     queue.offer(request -> responsePromise).flatMap {
-      case QueueOfferResult.Enqueued    ⇒ responsePromise.future
-      case QueueOfferResult.Dropped     ⇒ Future.failed(new RuntimeException("Queue overflowed. Try again later."))
+      case QueueOfferResult.Enqueued ⇒ responsePromise.future
+      case QueueOfferResult.Dropped ⇒ Future.failed(new RuntimeException("Queue overflowed. Try again later."))
       case QueueOfferResult.Failure(ex) ⇒ Future.failed(ex)
       case QueueOfferResult.QueueClosed ⇒ Future.failed(new RuntimeException("Queue was closed (pool shut down) while running the request. Try again later."))
     }

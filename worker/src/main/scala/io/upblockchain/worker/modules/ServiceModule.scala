@@ -9,9 +9,9 @@ import io.upblockchain.worker.client.GethClient
 import akka.stream.ActorMaterializer
 import javax.inject.{ Inject, Named }
 import akka.actor.Props
-import io.upblockchain.worker.services.GethEthereumActor
+import io.upblockchain.worker.services.{ ClientRouter, GethEthereumActor, SimpleClusterListener }
 import akka.actor.ActorRef
-import io.upblockchain.worker.services.SimpleClusterListener
+import akka.util.Timeout
 
 trait ServiceModule extends BaseModule {
 
@@ -33,10 +33,15 @@ trait ServiceModule extends BaseModule {
     sys.actorOf(Props(new GethEthereumActor(client)(sys, mat)), "GethActor")
   }
 
-  @Provides @Singleton @Named("ClusterListener")
-  def provideClusterListener(@Inject() sys: ActorSystem): ActorRef = {
-    sys.actorOf(Props[SimpleClusterListener], "ClusterListener")
+  @Provides @Singleton @Named("ClientRouter")
+  def provideClientRouter(implicit sys: ActorSystem, mat: ActorMaterializer): ActorRef = {
+    sys.actorOf(Props(new ClientRouter("/Users/yuhongyu/myeth_new/data/geth.ipc")(sys, mat)), "ClientRouter")
   }
+
+  //  @Provides @Singleton @Named("ClusterListener")
+  //  def provideClusterListener(@Inject() sys: ActorSystem): ActorRef = {
+  //    sys.actorOf(Props[SimpleClusterListener], "ClusterListener")
+  //  }
 
   @Provides @Singleton
   def provideEthClientConfig(@Inject() config: Config): EthClientConfig = {

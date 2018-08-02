@@ -7,6 +7,7 @@ import akka.stream.ActorMaterializer
 import io.upblockchain.common.json.JsonSupport
 import io.upblockchain.common.model.{ JsonRPCRequest, JsonRPCResponse }
 import jnr.unixsocket.{ UnixSocket, UnixSocketAddress, UnixSocketChannel }
+import org.json4s.jackson.Serialization._
 
 /*
 
@@ -26,17 +27,15 @@ import jnr.unixsocket.{ UnixSocket, UnixSocketAddress, UnixSocketChannel }
 
 */
 
-class GethIpcRoutee(implicit system: ActorSystem, materilizer: ActorMaterializer) extends Actor with ActorLogging with JsonSupport {
-  import scala.concurrent.ExecutionContext.Implicits.global
+class GethIpcRoutee(ipcPath: String)(implicit system: ActorSystem, materilizer: ActorMaterializer) extends Actor with ActorLogging with JsonSupport {
+  import context.dispatcher
 
-  val address = new UnixSocketAddress(new File("/Users/yuhongyu/myeth_new/data/geth.ipc"))
-  val channel = UnixSocketChannel.open(address)
-  val unixSocket = new UnixSocket(channel)
+  val address = new UnixSocketAddress(new File(ipcPath))
+  val unixSocket = new UnixSocket(UnixSocketChannel.open(address))
   val w = new PrintWriter(unixSocket.getOutputStream)
   val br = new BufferedReader(new InputStreamReader(unixSocket.getInputStream))
   var requestId = 0
 
-  import org.json4s.jackson.Serialization._
   def receive: Actor.Receive = {
     case req: JsonRPCRequest =>
       requestId = requestId + 1
@@ -47,6 +46,7 @@ class GethIpcRoutee(implicit system: ActorSystem, materilizer: ActorMaterializer
       val res = read[JsonRPCResponse](line).copy(id = req.id)
       sender() ! res
     case reqs: List[JsonRPCRequest] =>
+      requestId = requestId + 1
       val reqJson = write(reqs.map(req => req.copy(id = requestId + "-" + req.id)))
       w.println(reqJson)
       w.flush()
@@ -59,5 +59,5 @@ class GethIpcRoutee(implicit system: ActorSystem, materilizer: ActorMaterializer
 }
 
 object GethIpcRoutee {
-  def props(implicit system: ActorSystem, materilizer: ActorMaterializer) = Props(new GethIpcRoutee())
+  def props(ipcPath: String)(implicit system: ActorSystem, materilizer: ActorMaterializer) = Props(new GethIpcRoutee(ipcPath))
 }
