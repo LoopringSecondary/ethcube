@@ -35,9 +35,7 @@ class GethIpcRoutee(ipcPath: String)(implicit system: ActorSystem, materilizer: 
   val w = new PrintWriter(unixSocket.getOutputStream)
   val br = new BufferedReader(new InputStreamReader(unixSocket.getInputStream))
 
-  // TODO(hongyu) 这里我修改了一下, 要是不合适的话再 调整回来
   val requestId = new java.util.concurrent.atomic.AtomicInteger
-  // var requestId = 0
 
   def receive: Actor.Receive = {
     case req: JsonRPCRequest ⇒
@@ -57,9 +55,6 @@ class GethIpcRoutee(ipcPath: String)(implicit system: ActorSystem, materilizer: 
       w.flush()
 
       var line = br.readLine()
-      // TODO(hongyu) 这里是不是应该有 loop 做 readLine , 可以参考下面的代码 免去 while
-      // 如果不需要的话, 就把 TODO 删掉吧
-      // Stream.continually(br.readLine()).takeWhile(_ != null)
       val res = read[List[JsonRPCResponseWrapped]](line)
       sender() ! res.zipWithIndex.map {
         case (r, index) ⇒
