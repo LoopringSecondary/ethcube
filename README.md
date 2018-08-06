@@ -19,7 +19,25 @@ Worker 节点对外是以Actor调用, 参数是以protobuf定义, Worker 节点�
 
 # 运行
 
-以下命令都是在工程路径下面执行
+以下命令都是在工程路径下面执行, 运行项目可以使用环境变量或是命令行参数
+
+以下两种方式结果一样, 自动加载 application.conf 和 conf/test.conf
+
+
+例如 1: 
+
+```
+export env="test"
+
+sbt root/run
+```
+
+例如 2: 
+
+
+```
+sbt "root/run test"
+```
 
 ## 编译
 
