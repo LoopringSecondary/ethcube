@@ -28,12 +28,13 @@ class ClientRouter(ipcPath: String)(implicit system: ActorSystem, mat: ActorMate
   val routingDecider: PartialFunction[Throwable, SupervisorStrategy.Directive] = {
     case _: Exception ⇒ SupervisorStrategy.Restart
   }
-  val routerSupervisorStrategy = OneForOneStrategy(maxNrOfRetries = 5, withinTimeRange = 5 seconds)(
+  val routerSupervisorStrategy = OneForOneStrategy(maxNrOfRetries  = 5, withinTimeRange = 5 seconds)(
     routingDecider.orElse(SupervisorStrategy.defaultDecider))
   val resizer = DefaultResizer(
-    lowerBound = 2, upperBound = 50, pressureThreshold = 1, rampupRate = 1, backoffRate = 0.25, backoffThreshold = 0.25, messagesPerResize = 1)
+    lowerBound        = 2, upperBound = 50, pressureThreshold = 1, rampupRate = 1, backoffRate = 0.25, backoffThreshold = 0.25, messagesPerResize = 1)
+
   private val router = system.actorOf(
-    RoundRobinPool(nrOfInstances = 2, resizer = Some(resizer), supervisorStrategy = routerSupervisorStrategy)
+    RoundRobinPool(nrOfInstances      = 2, resizer = Some(resizer), supervisorStrategy = routerSupervisorStrategy)
       .props(GethIpcRoutee.props(ipcPath)), "client-router")
 
   def receive: Actor.Receive = {

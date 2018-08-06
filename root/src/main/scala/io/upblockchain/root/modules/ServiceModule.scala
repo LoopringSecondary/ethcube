@@ -13,14 +13,11 @@ import akka.cluster.client.ClusterClientSettings
 import com.typesafe.config.Config
 import com.typesafe.config.ConfigFactory
 
-trait ServiceModule extends BaseModule {
+trait ServiceModule extends BaseModule { self ⇒
 
   override def configure: Unit = {
     bind[EthJsonRPCService]
   }
-
-  @Provides @Singleton
-  def provideConfig: Config = ConfigFactory load
 
   @Provides @Singleton
   def provideActorSystem: ActorSystem = ActorSystem("RootSystem")
@@ -40,4 +37,11 @@ trait ServiceModule extends BaseModule {
 
 }
 
-object ServiceModule extends ServiceModule
+object ServiceModule extends ServiceModule {
+
+  def apply(args: Array[String]) = {
+
+    this
+  }
+
+}

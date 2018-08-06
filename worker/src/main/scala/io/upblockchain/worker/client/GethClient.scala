@@ -11,16 +11,13 @@ import akka.http.scaladsl.model.HttpResponse
 import akka.http.scaladsl.Http
 import akka.stream.scaladsl.SourceQueueWithComplete
 import akka.stream.OverflowStrategy
-import akka.stream.scaladsl.Sink
-import akka.stream.scaladsl.Keep
-import akka.stream.scaladsl.Source
-import scala.util.Success
-import scala.util.Failure
+import akka.stream.scaladsl._
+import scala.util._
 import scala.concurrent.Future
 import akka.stream.QueueOfferResult
-import io.upblockchain.worker.modules.EthClientConfig
+import io.upblockchain.worker.modules.GethClientConfig
 
-class GethClient @Inject() (system: ActorSystem, materilizer: ActorMaterializer, eth: EthClientConfig) {
+class GethClient @Inject() (system: ActorSystem, materilizer: ActorMaterializer, eth: GethClientConfig) {
 
   import system.dispatcher
 

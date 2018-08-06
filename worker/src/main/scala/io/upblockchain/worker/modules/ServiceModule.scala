@@ -20,9 +20,6 @@ trait ServiceModule extends BaseModule {
   }
 
   @Provides @Singleton
-  def provideConfig: Config = ConfigFactory load
-
-  @Provides @Singleton
   def provideActorSystem(@Inject() config: Config): ActorSystem = ActorSystem("ClusterSystem", config)
 
   @Provides @Singleton
@@ -34,29 +31,22 @@ trait ServiceModule extends BaseModule {
   }
 
   @Provides @Singleton @Named("ClientRouter")
-  def provideClientRouter(@Inject() gethConfig: GethIpcConfig, sys: ActorSystem, mat: ActorMaterializer): ActorRef = {
+  def provideClientRouter(@Inject() gethConfig: GethClientConfig, sys: ActorSystem, mat: ActorMaterializer): ActorRef = {
     sys.actorOf(Props(new ClientRouter(gethConfig.ipcPath)(sys, mat)), "ClientRouter")
   }
 
-  //  @Provides @Singleton @Named("ClusterListener")
-  //  def provideClusterListener(@Inject() sys: ActorSystem): ActorRef = {
-  //    sys.actorOf(Props[SimpleClusterListener], "ClusterListener")
-  //  }
-
   @Provides @Singleton
-  def provideEthClientConfig(@Inject() config: Config): EthClientConfig = {
-    EthClientConfig(config.getString("eth.host"), config.getInt("eth.port"), config.getBoolean("eth.ssl"))
-  }
+  def provideGethIpcConfig(@Inject() config: Config): GethClientConfig = {
+    val host = config.getString("geth.host")
+    val port = config.getInt("geth.port")
+    val ssl = config.getBoolean("geth.ssl")
+    val ipcPath = config.getString("geth.ipcpath")
 
-  @Provides @Singleton
-  def provideGethIpcConfig(@Inject() config: Config): GethIpcConfig = {
-    GethIpcConfig(config.getString("geth.ipcpath"))
+    GethClientConfig(host, port, ssl, ipcPath)
   }
 
 }
 
 object ServiceModule extends ServiceModule
 
-case class EthClientConfig(host: String, port: Int, ssl: Boolean = false)
-
-case class GethIpcConfig(ipcPath: String)
+case class GethClientConfig(host: String, port: Int, ssl: Boolean = false, ipcPath: String)

@@ -8,16 +8,17 @@ import akka.stream.ActorMaterializer
 import io.upblockchain.root.modules._
 import io.upblockchain.root.routees.RootRoute
 import com.typesafe.config.Config
+import io.upblockchain.common.modules.ConfigModule
 
 object Main extends App {
 
-  val injector = Guice.createInjector(ServiceModule)
+  val injector = Guice.createInjector(new ConfigModule(args), ServiceModule(args))
+  val config = injector.getInstance(classOf[Config])
 
   implicit val system = injector.getInstance(classOf[ActorSystem])
   implicit val mat = injector.getInstance(classOf[ActorMaterializer])
 
   val r = injector.getInstance(classOf[RootRoute])
-  val config = injector.getInstance(classOf[Config])
 
   Http().bindAndHandle(r(), config.getString("http.interface"), config.getInt("http.port"))
 
