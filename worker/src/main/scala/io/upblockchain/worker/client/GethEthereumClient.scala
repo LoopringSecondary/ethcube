@@ -1,23 +1,20 @@
 package io.upblockchain.worker.client
 
-import javax.inject.Inject
-import akka.actor.ActorSystem
-import akka.stream.ActorMaterializer
-import akka.stream.scaladsl.Flow
-import akka.http.scaladsl.model.HttpRequest
-import scala.concurrent.Promise
-import scala.util.Try
-import akka.http.scaladsl.model.HttpResponse
-import akka.http.scaladsl.Http
-import akka.stream.scaladsl.SourceQueueWithComplete
-import akka.stream.OverflowStrategy
-import akka.stream.scaladsl._
-import scala.util._
 import scala.concurrent.Future
-import akka.stream.QueueOfferResult
-import io.upblockchain.worker.modules.GethClientConfig
+import scala.concurrent.Promise
+import scala.util.Failure
+import scala.util.Success
+import scala.util.Try
 
-class GethClient @Inject() (system: ActorSystem, materilizer: ActorMaterializer, eth: GethClientConfig) {
+import akka.actor.ActorSystem
+import akka.http.scaladsl.Http
+import akka.http.scaladsl.model._
+import akka.stream._
+import akka.stream.scaladsl._
+import io.upblockchain.worker.modules.GethClientConfig
+import javax.inject.Inject
+
+class GethEthereumClient @Inject() (system: ActorSystem, materilizer: ActorMaterializer, eth: GethClientConfig) {
 
   import system.dispatcher
 

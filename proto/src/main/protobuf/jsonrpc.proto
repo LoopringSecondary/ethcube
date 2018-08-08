@@ -4,16 +4,17 @@ option java_multiple_files = true;
 option java_package = "io.upblockchain.proto";
 option java_outer_classname = "JsonRPCProto";
 
-import "google/protobuf/any.proto";
 
 // The request message containing the user's name.
 message JsonRPCRequest {
-  string json = 1;
+  string id = 1;
+  string json = 2;
 }
 
 // The response message containing the greetings
 message JsonRPCResponse {
-  string json = 1;
+  string id = 1;
+  string json = 2;
 }
 
 message JsonRPCRequestSeq {

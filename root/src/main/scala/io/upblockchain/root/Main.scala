@@ -6,9 +6,9 @@ import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.stream.ActorMaterializer
 import io.upblockchain.root.modules._
-import io.upblockchain.root.routees.RootRoute
 import com.typesafe.config.Config
 import io.upblockchain.common.modules.ConfigModule
+import io.upblockchain.root.rpc.RootEndpoints
 
 object Main extends App {
 
@@ -18,7 +18,7 @@ object Main extends App {
   implicit val system = injector.getInstance(classOf[ActorSystem])
   implicit val mat = injector.getInstance(classOf[ActorMaterializer])
 
-  val r = injector.getInstance(classOf[RootRoute])
+  val r = injector.getInstance(classOf[RootEndpoints])
 
   val server = Http().bindAndHandle(r(), config.getString("http.interface"), config.getInt("http.port"))
 

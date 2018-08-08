@@ -1,40 +1,30 @@
 package io.upblockchain.worker.modules
 
 import io.upblockchain.common.modules.BaseModule
+import io.upblockchain.worker.client.GethEthereumClient
 import com.google.inject.{ Provides, Singleton }
 import com.typesafe.config.Config
-import com.typesafe.config.ConfigFactory
-import akka.actor.ActorSystem
-import io.upblockchain.worker.client.GethClient
-import akka.stream.ActorMaterializer
 import javax.inject.{ Inject, Named }
-import akka.actor.Props
-import io.upblockchain.worker.services.{ ClientRouter, GethEthereumActor, SimpleClusterListener }
-import akka.actor.ActorRef
-import akka.util.Timeout
-import io.upblockchain.worker.services.ClientRouter
+import akka.actor._
+import akka.stream.ActorMaterializer
+import io.upblockchain.worker.services.GethClientActor
 
 trait ServiceModule extends BaseModule {
 
   override def configure: Unit = {
-    bind[GethClient]
+    bind[GethEthereumClient]
   }
 
   @Provides @Singleton
   def provideActorSystem(@Inject() config: Config): ActorSystem = ActorSystem("ClusterSystem", config)
-
+  //
   @Provides @Singleton
   def provideActorMaterializer(@Inject() sys: ActorSystem): ActorMaterializer = ActorMaterializer()(sys)
 
+  //
   @Provides @Singleton @Named("GethActor")
-  def provideGethActor(@Inject() client: GethClient, sys: ActorSystem, mat: ActorMaterializer): Props = {
-    Props(new GethEthereumActor(client)(sys, mat))
-  }
-
-  @Provides @Singleton @Named("ClientRouter")
-  def provideClientRouter(@Inject()@Named("GethActor") actor: Props, sys: ActorSystem, mat: ActorMaterializer): ActorRef = {
-    //    Props(new ClientRouter())
-    sys.actorOf(Props(new ClientRouter(actor)(sys, mat)), "ClientRouter")
+  def provideGethActor(@Inject() client: GethEthereumClient, sys: ActorSystem, mat: ActorMaterializer): ActorRef = {
+    sys.actorOf(Props(new GethClientActor(client)(sys, mat)), "GethActor")
   }
 
   @Provides @Singleton

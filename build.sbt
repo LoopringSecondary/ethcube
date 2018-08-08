@@ -28,7 +28,7 @@ lazy val worker = (project in file("worker"))
 
 
 lazy val root = (project in file("root"))
-  .dependsOn(common)
+  .dependsOn(common, worker)
   .settings(
     libraryDependencies ++= akkaDependency
   )

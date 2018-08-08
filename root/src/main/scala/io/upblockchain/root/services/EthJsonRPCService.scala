@@ -11,12 +11,12 @@ import javax.inject.Named
 import akka.actor.ActorRef
 import io.upblockchain.proto.jsonrpc._
 
-class EthJsonRPCService @Inject() (@Named("ClusterClient") cluster: ActorRef) {
+class EthJsonRPCService @Inject() (@Named("ClusterClient") client: ActorRef) {
 
   implicit val timeout = Timeout(5 seconds)
 
   def handleClientRequest(req: JsonRPCRequest): Future[JsonRPCResponse] = {
-    (cluster ? ClusterClient.Send("/user/ClientRouter", req, localAffinity = true)).mapTo[JsonRPCResponse]
+    (client ? req).mapTo[JsonRPCResponse]
   }
 
 }
