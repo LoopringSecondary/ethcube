@@ -12,7 +12,7 @@ import io.upblockchain.common.modules.ConfigModule
 
 object Main extends App {
 
-  val injector = Guice.createInjector(new ConfigModule(args), ServiceModule(args))
+  val injector = Guice.createInjector(new ConfigModule(args), ServiceModule)
   val config = injector.getInstance(classOf[Config])
 
   implicit val system = injector.getInstance(classOf[ActorSystem])
@@ -20,7 +20,11 @@ object Main extends App {
 
   val r = injector.getInstance(classOf[RootRoute])
 
-  Http().bindAndHandle(r(), config.getString("http.interface"), config.getInt("http.port"))
+  val server = Http().bindAndHandle(r(), config.getString("http.interface"), config.getInt("http.port"))
+
+  //  server.onComplete { x =>
+  //
+  //  }
 
   println(logo)
 

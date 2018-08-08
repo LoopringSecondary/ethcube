@@ -11,6 +11,9 @@ import akka.http.scaladsl.model._
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.pattern.pipe
 import io.upblockchain.proto.jsonrpc._
+import io.upblockchain.common.model._
+import akka.util.ByteString
+import org.json4s.native.Serialization.{ write }
 
 class GethEthereumActor(client: GethClient)(implicit system: ActorSystem, mat: ActorMaterializer) extends Actor with JsonSupport {
 
@@ -19,11 +22,15 @@ class GethEthereumActor(client: GethClient)(implicit system: ActorSystem, mat: A
 
   def receive: Actor.Receive = {
     case req: JsonRPCRequest ⇒
+
+      val httpReq = HttpRequest(
+        method = HttpMethods.POST,
+        entity = HttpEntity(ContentTypes.`application/json`, ByteString(req.json)))
+
       val result = for {
-        reqEntity ← Marshal(req).to[RequestEntity]
-        httpResp ← client.handleRequest(HttpRequest(method = HttpMethods.POST, entity = reqEntity))
-        jsonResp ← Unmarshal(httpResp).to[JsonRPCResponse]
-      } yield jsonResp
+        httpResp ← client.handleRequest(httpReq)
+        jsonResp ← httpResp.entity.dataBytes.map(_.utf8String).runReduce(_ + _)
+      } yield JsonRPCResponse(json = jsonResp)
       result pipeTo sender
     case _ ⇒ context.stop(self)
   }

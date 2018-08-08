@@ -41,7 +41,7 @@ class GethIpcRoutee(ipcPath: String)(implicit system: ActorSystem, materilizer: 
     case req: JsonRPCRequest ⇒
 
       val reqWrapped = toJsonRPCRequestWrapped(req)
-      val reqJson = write(reqWrapped.copy(id = requestId.getAndIncrement + "-" + reqWrapped.id))
+      val reqJson = write(reqWrapped) //.copy(id = requestId.getAndIncrement + "-" + reqWrapped.id))
       w.println(reqJson)
       w.flush()
       var line = br.readLine()
@@ -50,7 +50,7 @@ class GethIpcRoutee(ipcPath: String)(implicit system: ActorSystem, materilizer: 
     case reqs: JsonRPCRequestSeq ⇒
 
       val reqSeqWrapped = reqs.req.seq.map(toJsonRPCRequestWrapped)
-      val reqJson = write(reqSeqWrapped.map(req ⇒ req.copy(id = requestId.getAndIncrement + "-" + req.id)))
+      val reqJson = write(reqSeqWrapped) // .map(req ⇒ req.copy(id = requestId.getAndIncrement + "-" + req.id)))
       w.println(reqJson)
       w.flush()
 
@@ -66,5 +66,10 @@ class GethIpcRoutee(ipcPath: String)(implicit system: ActorSystem, materilizer: 
 }
 
 object GethIpcRoutee {
-  def props(ipcPath: String)(implicit system: ActorSystem, materilizer: ActorMaterializer) = Props(new GethIpcRoutee(ipcPath))
+  def props(ipcPath: String)(implicit system: ActorSystem, materilizer: ActorMaterializer) = {
+    // val d = new GethIpcRoutee(ipcPath)
+
+    Props(new GethIpcRoutee(ipcPath))
+
+  }
 }

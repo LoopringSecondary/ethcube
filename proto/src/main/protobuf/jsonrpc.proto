@@ -8,12 +8,12 @@ import "google/protobuf/any.proto";
 
 // The request message containing the user's name.
 message JsonRPCRequest {
-  string req = 1;
+  string json = 1;
 }
 
 // The response message containing the greetings
 message JsonRPCResponse {
-  string resp = 1;
+  string json = 1;
 }
 
 message JsonRPCRequestSeq {

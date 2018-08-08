@@ -24,13 +24,13 @@ import akka.util.Timeout
 */
 import scala.concurrent.duration._
 import io.upblockchain.proto.jsonrpc._
-import io.upblockchain.common.model.JsonRPCRequestWrapped
+import io.upblockchain.common.model._
 
 class StatsMonitor(clientRouter: ActorRef)(implicit system: ActorSystem, materilizer: ActorMaterializer, timeout: Timeout) extends Actor with ActorLogging {
 
   import context.dispatcher
   context.system.scheduler.schedule(1 seconds, 10 seconds, self, CollectReq())
-  val blockNumberReq = JsonRPCRequestWrapped("2.0", "eth_blockNumber", None, 1)
+  val blockNumberReq = JsonRPCRequestWrapped("2.0", "eth_blockNumber", None, Option(1))
 
   var stat = Stat(self.path.address, 0, false)
   def receive: Actor.Receive = {

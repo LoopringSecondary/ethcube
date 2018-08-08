@@ -12,6 +12,7 @@ import akka.actor.Props
 import io.upblockchain.worker.services.{ ClientRouter, GethEthereumActor, SimpleClusterListener }
 import akka.actor.ActorRef
 import akka.util.Timeout
+import io.upblockchain.worker.services.ClientRouter
 
 trait ServiceModule extends BaseModule {
 
@@ -26,13 +27,14 @@ trait ServiceModule extends BaseModule {
   def provideActorMaterializer(@Inject() sys: ActorSystem): ActorMaterializer = ActorMaterializer()(sys)
 
   @Provides @Singleton @Named("GethActor")
-  def provideGethActor(@Inject() sys: ActorSystem, mat: ActorMaterializer, client: GethClient): ActorRef = {
-    sys.actorOf(Props(new GethEthereumActor(client)(sys, mat)), "GethActor")
+  def provideGethActor(@Inject() client: GethClient, sys: ActorSystem, mat: ActorMaterializer): Props = {
+    Props(new GethEthereumActor(client)(sys, mat))
   }
 
   @Provides @Singleton @Named("ClientRouter")
-  def provideClientRouter(@Inject() gethConfig: GethClientConfig, sys: ActorSystem, mat: ActorMaterializer): ActorRef = {
-    sys.actorOf(Props(new ClientRouter(gethConfig.ipcPath)(sys, mat)), "ClientRouter")
+  def provideClientRouter(@Inject()@Named("GethActor") actor: Props, sys: ActorSystem, mat: ActorMaterializer): ActorRef = {
+    //    Props(new ClientRouter())
+    sys.actorOf(Props(new ClientRouter(actor)(sys, mat)), "ClientRouter")
   }
 
   @Provides @Singleton

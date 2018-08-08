@@ -23,6 +23,8 @@ Worker 节点对外是以Actor调用, 参数是以protobuf定义, Worker 节点�
 
 以下两种方式结果一样, 自动加载 application.conf 和 conf/test.conf
 
+如果不使用参数, 自动加载 application.conf 和 conf/dev.conf
+
 
 例如 1: 
 

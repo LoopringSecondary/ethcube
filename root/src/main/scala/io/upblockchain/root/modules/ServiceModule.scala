@@ -27,21 +27,9 @@ trait ServiceModule extends BaseModule { self ⇒
 
   @Provides @Singleton @Named("ClusterClient")
   def provideClusterPros(@Inject() sys: ActorSystem): ActorRef = {
-    sys.actorOf(ClusterClient.props(ClusterClientSettings(sys)), "cluster_client")
-  }
-
-  //  @Provides @Singleton @Named("SimpleClusterListener")
-  //  def provideClusterListener(@Inject() sys: ActorSystem): ActorRef = {
-  //    sys.actorOf(Props[SimpleClusterListener], "SimpleClusterListener")
-  //  }
-
-}
-
-object ServiceModule extends ServiceModule {
-
-  def apply(args: Array[String]) = {
-
-    this
+    sys.actorOf(ClusterClient.props(ClusterClientSettings(sys)), "ClusterClient")
   }
 
 }
+
+object ServiceModule extends ServiceModule

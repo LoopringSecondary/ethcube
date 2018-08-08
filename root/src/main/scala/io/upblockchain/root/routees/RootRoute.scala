@@ -1,27 +1,28 @@
 package io.upblockchain.root.routees
 
-import akka.http.scaladsl.server.Route
-import akka.http.scaladsl.server._
-import akka.http.scaladsl.server.Directives._
-import javax.inject.Inject
-import akka.actor.Actor
-import akka.http.scaladsl.model.StatusCodes
-import akka.http.scaladsl.model.ContentTypes
-import akka.http.scaladsl.model.HttpResponse
-import akka.http.scaladsl.model.HttpEntity
-import akka.util.ByteString
-import io.upblockchain.common.json.JsonSupport
-import io.upblockchain.root.services.EthJsonRPCService
-import io.upblockchain.proto.jsonrpc.JsonRPCRequest
+import scala.concurrent.duration.DurationInt
 
-class RootRoute @Inject() (service: EthJsonRPCService) extends JsonSupport {
+import org.json4s.native.JsonMethods.parse
+
+import akka.http.scaladsl.server.Directives._
+import akka.http.scaladsl.server.Route
+import akka.stream.ActorMaterializer
+import io.upblockchain.common.model.JsonRPCRequestWrapped
+import io.upblockchain.root.services.EthJsonRPCService
+import javax.inject.Inject
+import io.upblockchain.common.json.JsonSupport
+
+class RootRoute @Inject() (service: EthJsonRPCService, mat: ActorMaterializer) extends JsonSupport {
+
+  val timeout = 300.millis
+
+  implicit val d = mat
 
   def apply(): Route = {
     pathEndOrSingleSlash {
-      entity(as[JsonRPCRequest]) { req ⇒
-        onSuccess(service.handleClientRequest(req)) { resp ⇒
-          // TODO(Toan) 这里应该做 application/json 处理 还没做测试
-          complete(HttpEntity(ContentTypes.`application/json`, resp.resp))
+      entity(as[JsonRPCRequestWrapped]) { req ⇒
+        onSuccess(service.handleClientRequest(req.toRequest)) { resp ⇒
+          complete(parse(resp.json))
         }
       }
     }

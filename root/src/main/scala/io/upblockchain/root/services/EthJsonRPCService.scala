@@ -16,9 +16,7 @@ class EthJsonRPCService @Inject() (@Named("ClusterClient") cluster: ActorRef) {
   implicit val timeout = Timeout(5 seconds)
 
   def handleClientRequest(req: JsonRPCRequest): Future[JsonRPCResponse] = {
-    // TODO(Toan) 这里返回结果有问题
-    // TODO(Toan) 地址可以进行配置化
-    (cluster ? ClusterClient.Send("/user/GethActor", req, localAffinity = true)).mapTo[JsonRPCResponse]
+    (cluster ? ClusterClient.Send("/user/ClientRouter", req, localAffinity = true)).mapTo[JsonRPCResponse]
   }
 
 }

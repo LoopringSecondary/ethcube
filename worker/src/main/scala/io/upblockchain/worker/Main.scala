@@ -28,8 +28,21 @@ object Main extends App {
     println(gethIpcConfig.ipcPath, "not exists")
     system.terminate()
   }
+
   val clientRouter = injector.getActor("ClientRouter")
   ClusterClientReceptionist(system).registerService(clientRouter)
 
-  val monitor = system.actorOf(StatsMonitor.props(clientRouter))
+  //  val testRouter = injector.getActor("GethActor")
+  //  ClusterClientReceptionist(system).registerService(testRouter)
+
+  // val monitor = system.actorOf(StatsMonitor.props(clientRouter))
+
+  println(logo)
+
+  lazy val logo = """
+   _       __           __            
+  | |     / /___  _____/ /_____  _____
+  | | /| / / __ \/ ___/ //_/ _ \/ ___/
+  | |/ |/ / /_/ / /  / ,< /  __/ /    
+  |__/|__/\____/_/  /_/|_|\___/_/     """
 }
