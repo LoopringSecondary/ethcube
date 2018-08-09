@@ -11,22 +11,13 @@ package object model extends JsonSupport {
     parse(req.json).extract[JsonRPCRequestWrapped]
   }
 
-  //  sealed trait JsonRPCWrapped {
-  //    val _id: Option[Any]
-  //
-  //    def getId = _id.map(_.toString).getOrElse("")
-  //  }
-
   case class JsonRPCRequestWrapped(jsonrpc: String = "2.0", method: String, params: Any, id: Int) {
-
     def toRequest: JsonRPCRequest = JsonRPCRequest(id = id.toString, json = write(this))
-
   }
 
   case class JsonRPCErrorWrapped(code: Int, message: String)
 
   case class JsonRPCResponseWrapped(id: Option[Any], jsonrpc: String, result: Option[Any] = None, error: Option[JsonRPCErrorWrapped] = None) {
-
     def toResponse: JsonRPCResponse = JsonRPCResponse(id = id.map(_.toString).getOrElse(""), json = write(this))
   }
 

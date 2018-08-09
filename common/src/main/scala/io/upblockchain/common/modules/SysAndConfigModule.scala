@@ -23,7 +23,7 @@ class SysAndConfigModule(args: Array[String]) extends AbstractModule with ScalaM
       if (envArgs == null) "dev" else envArgs
     }
 
-    // println("env ==>>>" + s"conf/${env}.conf")
+    println(s"load configuration file : conf/${env}")
 
     ConfigFactory.load().withFallback(ConfigFactory.load(s"conf/${env}.conf"))
 

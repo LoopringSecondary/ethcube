@@ -1,8 +1,8 @@
 package io.upblockchain
 
 import akka.actor.ActorRef
-import com.google.inject._
 import com.google.inject.name.Names
+import com.google.inject.{ Injector, Key }
 
 package object common {
 
@@ -11,4 +11,5 @@ package object common {
       injector.getInstance(Key.get(classOf[ActorRef], Names.named(name)))
     }
   }
+  
 }
