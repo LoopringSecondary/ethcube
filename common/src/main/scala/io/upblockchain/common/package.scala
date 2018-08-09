@@ -11,5 +11,5 @@ package object common {
       injector.getInstance(Key.get(classOf[ActorRef], Names.named(name)))
     }
   }
-  
+
 }
