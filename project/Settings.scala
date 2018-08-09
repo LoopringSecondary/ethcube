@@ -1,11 +1,9 @@
 import sbt._
 import Keys._
 
-
 object Settings {
-
-	lazy val basicSettings: Seq[Setting[_]] = Seq(
-    name := "eth",
+  lazy val basicSettings: Seq[Setting[_]] = Seq(
+    name := "ethcube",
     organization := Globals.organization,
     version := Globals.version,
     scalaVersion := Globals.scalaVersion,
@@ -27,5 +25,8 @@ object Settings {
     // publishArtifact in (Compile, packageDoc) := false,
     shellPrompt in ThisBuild := { state => "sbt (%s)> ".format(Project.extract(state).currentProject.id) })
 
-
+  lazy val autoHeaderSettings: Seq[Setting[_]] = Seq(
+    organizationName := "Loopring Foundation",
+    startYear := Some(2018),
+    licenses += ("Apache-2.0", new URL("https://www.apache.org/licenses/LICENSE-2.0.txt")))
 }
