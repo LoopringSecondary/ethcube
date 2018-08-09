@@ -2,7 +2,6 @@ package io.upblockchain.root.modules
 
 import com.google.inject.Provides
 import com.google.inject.Singleton
-import com.typesafe.config.Config
 
 import akka.actor.ActorRef
 import akka.actor.ActorSystem
