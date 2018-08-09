@@ -10,7 +10,6 @@ import io.upblockchain.common.json.JsonSupport
 import io.upblockchain.common.model.JsonRPCRequestWrapped
 import javax.inject.{ Inject, Named }
 import org.slf4j.LoggerFactory
-import com.google.common.base.Stopwatch
 import java.util.concurrent.TimeUnit
 import akka.actor.ActorRef
 import akka.util.Timeout
@@ -27,11 +26,9 @@ class RootEndpoints @Inject() (@Named("ClusterClient") cluster: ActorRef, mat: A
   def apply(): Route = {
     pathEndOrSingleSlash {
       entity(as[JsonRPCRequestWrapped]) { req ⇒
-        val watcher = Stopwatch.createStarted().start()
         Log.info(s"http request => ${req}")
         onSuccess(handleClientRequest(req.toRequest)) { resp ⇒
-          watcher.stop()
-          Log.info(s"http response elapsed:${watcher.elapsed(TimeUnit.MILLISECONDS)} => ${resp.json}")
+          Log.info(s"http response => ${resp.json}")
           complete(parse(resp.json))
         }
       }

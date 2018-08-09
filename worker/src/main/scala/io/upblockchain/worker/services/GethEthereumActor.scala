@@ -14,11 +14,11 @@ import io.upblockchain.common.model._
 import akka.util.ByteString
 import org.json4s.native.Serialization.{ write }
 import io.upblockchain.worker.client.GethEthereumClient
+import akka.actor.ActorLogging
 
-class GethEthereumActor(client: GethEthereumClient)(implicit system: ActorSystem, mat: ActorMaterializer) extends Actor with JsonSupport {
+class GethEthereumActor(client: GethEthereumClient)(implicit system: ActorSystem, mat: ActorMaterializer) extends Actor with ActorLogging with JsonSupport {
 
   import system.dispatcher
-  val timeout = 300.millis
 
   def receive: Actor.Receive = {
     case req: JsonRPCRequest ⇒
@@ -26,10 +26,13 @@ class GethEthereumActor(client: GethEthereumClient)(implicit system: ActorSystem
       val httpReq = HttpRequest(
         method = HttpMethods.POST,
         entity = HttpEntity(ContentTypes.`application/json`, ByteString(req.json)))
+
       val result = for {
         httpResp ← client.handleRequest(httpReq)
         jsonResp ← httpResp.entity.dataBytes.map(_.utf8String).runReduce(_ + _)
+        _ = log.info(s"geth client json response => ${jsonResp}")
       } yield JsonRPCResponse(id = req.id, json = jsonResp)
+
       result pipeTo sender
 
     case _ ⇒ context.stop(self)

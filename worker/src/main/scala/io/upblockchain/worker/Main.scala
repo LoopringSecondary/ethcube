@@ -1,7 +1,7 @@
 package io.upblockchain.worker
 
+import io.upblockchain.common._
 import com.google.inject.Guice
-
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
 import io.upblockchain.common.ActorInjector
@@ -12,7 +12,9 @@ object Main extends App {
 
   val injector = Guice.createInjector(new SysAndConfigModule(args), ServiceModule)
   implicit val sys = injector.getInstance(classOf[ActorSystem])
-  implicit val mat = injector.getInstance(classOf[ActorMaterializer])
+  //  implicit val mat = injector.getInstance(classOf[ActorMaterializer])
+
+  val actor = injector.getActor("GethActor")
 
   println(logo)
 
