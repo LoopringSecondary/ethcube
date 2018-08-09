@@ -5,8 +5,10 @@ import com.typesafe.config._
 import java.io.File
 import com.google.inject.AbstractModule
 import net.codingwell.scalaguice.ScalaModule
+import com.google.inject.Inject
+import akka.actor.ActorSystem
 
-class ConfigModule(args: Array[String]) extends AbstractModule with ScalaModule {
+class SysAndConfigModule(args: Array[String]) extends AbstractModule with ScalaModule {
 
   override def configure: Unit = {
     bind[Config].toInstance(provideConfig)
@@ -21,10 +23,13 @@ class ConfigModule(args: Array[String]) extends AbstractModule with ScalaModule 
       if (envArgs == null) "dev" else envArgs
     }
 
-    println("env ==>>>" + s"conf/${env}.conf")
+    // println("env ==>>>" + s"conf/${env}.conf")
 
     ConfigFactory.load().withFallback(ConfigFactory.load(s"conf/${env}.conf"))
 
   }
+
+  @Provides @Singleton
+  def provideActorSystem(@Inject() config: Config): ActorSystem = ActorSystem("ClusterSystem", config)
 
 }

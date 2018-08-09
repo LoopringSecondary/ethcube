@@ -16,10 +16,6 @@ class RootEndpoints @Inject() (service: EthJsonRPCService, mat: ActorMaterialize
   def apply(): Route = {
     pathEndOrSingleSlash {
       entity(as[JsonRPCRequestWrapped]) { req ⇒
-        // complete("Ok")
-        println("req ===>>>" + req)
-
-        // complete("Ok")
         onSuccess(service.handleClientRequest(req.toRequest)) { resp ⇒
           complete(parse(resp.json))
         }

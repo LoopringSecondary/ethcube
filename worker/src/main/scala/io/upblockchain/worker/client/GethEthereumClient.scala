@@ -31,7 +31,7 @@ class GethEthereumClient @Inject() (system: ActorSystem, materilizer: ActorMater
       .via(poolClientFlow)
       .toMat(Sink.foreach({
         case (Success(resp), p) ⇒ p.success(resp)
-        case (Failure(e), p) ⇒ p.failure(e)
+        case (Failure(e), p) ⇒ p.failure(e) // 这里可以定制一个json
       }))(Keep.left).run()(materilizer)
 
   def handleRequest(request: HttpRequest): Future[HttpResponse] = {
