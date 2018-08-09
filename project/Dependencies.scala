@@ -25,6 +25,7 @@ object Dependencies {
 	lazy val akkaDependency = Seq(
 		// "io.github.shogowada" %% "scala-json-rpc" % "0.9.3",
 		"com.typesafe.akka" %% "akka-actor" % akkaVersion,
+		"com.typesafe.akka" %% "akka-slf4j" % akkaVersion,
 		"com.typesafe.akka" %% "akka-remote" % akkaVersion,
 		"com.typesafe.akka" %% "akka-stream" % akkaVersion,
 		"com.typesafe.akka" %% "akka-contrib" % akkaVersion,
