@@ -36,7 +36,7 @@ object Dependencies {
 	)
 
 	lazy val socketDependency = Seq(
-		"com.github.jnr" % "jnr-unixsocket" % "0.18"
+		"com.github.jnr" % "jnr-unixsocket" % "0.19"
 	)
 
 

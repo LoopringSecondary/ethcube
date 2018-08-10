@@ -13,28 +13,19 @@ import io.upblockchain.proto.jsonrpc._
 import io.upblockchain.common.model._
 import akka.util.ByteString
 import org.json4s.native.Serialization.{ write }
-import io.upblockchain.worker.client.GethEthereumClient
 import akka.actor.ActorLogging
+import scala.concurrent.Future
+import io.upblockchain.worker.client.GethEthereumClient
 
-class GethEthereumActor(client: GethEthereumClient)(implicit system: ActorSystem, mat: ActorMaterializer) extends Actor with ActorLogging with JsonSupport {
+class GethEthereumRouter(client: GethEthereumClient)(implicit system: ActorSystem, mat: ActorMaterializer) extends Actor with ActorLogging with JsonSupport {
 
   import system.dispatcher
 
   def receive: Actor.Receive = {
     case req: JsonRPCRequest ⇒
-
-      val httpReq = HttpRequest(
-        method = HttpMethods.POST,
-        entity = HttpEntity(ContentTypes.`application/json`, ByteString(req.json)))
-
-      val result = for {
-        httpResp ← client.handleRequest(httpReq)
-        jsonResp ← httpResp.entity.dataBytes.map(_.utf8String).runReduce(_ + _)
-        _ = log.info(s"geth client json response => ${jsonResp}")
-      } yield JsonRPCResponse(id = req.id, json = jsonResp)
-
-      result pipeTo sender
-
+      // TODO(Toan) 这里可以试试修改为 forward actor 暂时先这样
+      client.handleRequest(req) pipeTo sender
     case _ ⇒ context.stop(self)
   }
+
 }
