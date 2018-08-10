@@ -21,6 +21,7 @@ lazy val common = (project in file("common"))
   )
 
 lazy val worker = (project in file("worker"))
+  .enablePlugins(DockerPlugin)
   .dependsOn(common)
   .settings(
     libraryDependencies ++= akkaDependency ++ socketDependency
