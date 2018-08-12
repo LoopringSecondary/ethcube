@@ -65,6 +65,31 @@ sbt root/run
 sbt worker/run
 ```
 
+## docker 运行
+
+### root docker
+
+```
+
+sbt root/docker:publishLocal
+
+docker images
+
+docker run -it -p 8080:8080 root:0.1.0-SNAPSHOT / docker run -d -p 8080:8080 --name root root:0.1.0-SNAPSHOT
+
+```
+
+### worker docker
+
+```
+
+sbt worker/docker:publishLocal
+
+docker images
+
+docker run -it -p 8080:8080 worker:0.1.0-SNAPSHOT / docker run -d -p 8080:8080 --name worker worker:0.1.0-SNAPSHOT
+
+```
 
 
 # 功能

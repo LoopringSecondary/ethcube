@@ -1,7 +1,11 @@
 import sbt._
 import Keys._
-import sbtdocker._
 
+import com.typesafe.sbt.packager.Keys._
+import sbtdocker._
+import sbtdocker.DockerKeys._
+
+import sbt.Logger
 
 object Settings {
 
@@ -29,18 +33,22 @@ object Settings {
     shellPrompt in ThisBuild := { state => "sbt (%s)> ".format(Project.extract(state).currentProject.id) })
 
 
-  // lazy val dockerSettings: Seq[Setting[_]] = Seq(
-  //   dockerfile in Docker := {
-  //     val appDir = stage.value
-  //     val targetDir = "/app"
+  lazy val dockerSettings: Seq[Setting[_]] = Seq(
+    
+    dockerfile in docker := {
+      val appDir = stage.value
+      val targetDir = "/app"
 
-  //     new Dockerfile {
-  //       from("openjdk:8-jre")
-  //       entryPoint(s"$targetDir/bin/${executableScriptName.value}")
-  //       copy(appDir, targetDir)
-  //     }
-  //   }, 
-  //   buildOptions in Docker := BuildOptions(cache = false))
+      new Dockerfile {
+        from("java:8u111-jre") // 这里还是默认的openjdk 不知道为什么
+        entryPoint(s"$targetDir/bin/${executableScriptName.value}")
+        expose(8080)
+        // container(containerId)
+        copy(appDir, targetDir, chown = "daemon:daemon")
+      }
+    }
+
+  )
 
 
 }

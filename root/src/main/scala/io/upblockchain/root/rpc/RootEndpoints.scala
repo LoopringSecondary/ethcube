@@ -31,6 +31,7 @@ class RootEndpoints @Inject() (@Named("ClusterClient") cluster: ActorRef, mat: A
           Log.info(s"http response => ${resp.json}")
           complete(parse(resp.json))
         }
+        // complete("Ok")
       }
     }
   }
