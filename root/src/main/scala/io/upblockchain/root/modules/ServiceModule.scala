@@ -8,16 +8,14 @@ import akka.cluster.routing.{ ClusterRouterGroup, ClusterRouterGroupSettings }
 import akka.stream.ActorMaterializer
 import io.upblockchain.common.modules.BaseModule
 import javax.inject.{ Inject, Named }
-import io.upblockchain.root.cluster.SimpleClusterListener
 import akka.actor.Props
 import akka.cluster.Cluster
 import akka.routing.Router
-import io.upblockchain.root.routing.SimpleRoutingLogic
 
 trait ServiceModule extends BaseModule { self ⇒
 
   override def configure: Unit = {
-    bind[SimpleRoutingLogic]
+    //bind[SimpleRoutingLogic]
   }
 
   @Provides @Singleton
@@ -37,11 +35,6 @@ trait ServiceModule extends BaseModule { self ⇒
         routeesPaths = List("/user/gethActor"),
         allowLocalRoutees = false)).props(), "clusterBalanceGroup")
   }
-
-  //  @Provides @Singleton @Named("clusterListener")
-  //  def provideClusterListener(@Inject() sys: ActorSystem, cluster: Cluster, logic: SimpleRoutingLogic): ActorRef = {
-  //    sys.actorOf(Props(classOf[SimpleClusterListener], cluster, logic), "clusterListener")
-  //  }
 
 }
 
