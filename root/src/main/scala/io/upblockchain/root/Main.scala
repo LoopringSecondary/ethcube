@@ -1,5 +1,6 @@
 package io.upblockchain.root
 
+import io.upblockchain.common._
 import com.google.inject.Guice
 import com.typesafe.config.Config
 
@@ -9,6 +10,7 @@ import akka.stream.ActorMaterializer
 import io.upblockchain.common.modules.SysAndConfigModule
 import io.upblockchain.root.modules.ServiceModule
 import io.upblockchain.root.rpc.RootEndpoints
+import akka.cluster.Cluster
 
 object Main extends App {
 
@@ -17,6 +19,10 @@ object Main extends App {
 
   implicit val system = injector.getInstance(classOf[ActorSystem])
   implicit val mat = injector.getInstance(classOf[ActorMaterializer])
+
+  val cluster = injector.getInstance(classOf[Cluster])
+
+  val clusterClient = injector.getActor("ClusterClient")
 
   val r = injector.getInstance(classOf[RootEndpoints])
 

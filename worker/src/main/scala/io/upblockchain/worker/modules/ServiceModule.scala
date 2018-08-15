@@ -9,7 +9,7 @@ import akka.actor._
 import akka.stream.ActorMaterializer
 import io.upblockchain.worker.services.GethEthereumRouter
 import akka.routing.RandomPool
-import io.upblockchain.worker.services.SimpleClusterListener
+//import io.upblockchain.worker.services.SimpleClusterListener
 import io.upblockchain.worker.client.geth.GethHttpClientImpl
 import io.upblockchain.worker.client.geth.GethIpcClientImpl
 
@@ -37,12 +37,6 @@ trait ServiceModule extends BaseModule {
     // 这里定义本地随机路由
     // TODO(Toan) 这里缺少监管策略
     sys.actorOf(RandomPool(5).props(Props(new GethEthereumRouter(client)(sys, mat))), "gethActor")
-  }
-
-  //  SimpleClusterListener
-  @Provides @Singleton @Named("clusterListener")
-  def provideClusterListener(@Inject() sys: ActorSystem): ActorRef = {
-    sys.actorOf(Props[SimpleClusterListener], "clusterListener")
   }
 
   @Provides @Singleton

@@ -42,10 +42,14 @@ class GethHttpClientImpl @Inject() (system: ActorSystem, materilizer: ActorMater
   private def request(request: HttpRequest): Future[HttpResponse] = {
     val responsePromise = Promise[HttpResponse]()
     queue.offer(request -> responsePromise).flatMap {
-      case QueueOfferResult.Enqueued ⇒ responsePromise.future
-      case QueueOfferResult.Dropped ⇒ Future.failed(new RuntimeException("Queue overflowed. Try again later."))
-      case QueueOfferResult.Failure(ex) ⇒ Future.failed(ex)
-      case QueueOfferResult.QueueClosed ⇒ Future.failed(new RuntimeException("Queue was closed (pool shut down) while running the request. Try again later."))
+      case QueueOfferResult.Enqueued ⇒
+        responsePromise.future
+      case QueueOfferResult.Dropped ⇒
+        Future.failed(new RuntimeException("Queue overflowed. Try again later."))
+      case QueueOfferResult.Failure(ex) ⇒
+        Future.failed(ex)
+      case QueueOfferResult.QueueClosed ⇒
+        Future.failed(new RuntimeException("Queue was closed (pool shut down) while running the request. Try again later."))
     }
   }
 

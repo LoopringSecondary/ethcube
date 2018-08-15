@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<configuration scan="true" scanPeriod="240 seconds">
+<configuration scan="false" scanPeriod="240 seconds" debug="false">
 
 	<property name="LogPattern"
 		value="[%-5level] - %date [%thread] %logger{10} [%file:%line] - %msg%n" />
