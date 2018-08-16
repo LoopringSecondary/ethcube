@@ -9,7 +9,7 @@ import akka.http.scaladsl.Http
 import akka.stream.ActorMaterializer
 import io.upblockchain.common.modules.SysAndConfigModule
 import io.upblockchain.root.modules.ServiceModule
-import io.upblockchain.root.rpc.RootEndpoints
+import io.upblockchain.root.endpoints.RootEndpoints
 import akka.cluster.Cluster
 
 object Main extends App {

@@ -16,7 +16,6 @@ import io.upblockchain.worker.client.geth.GethIpcClientImpl
 trait ServiceModule extends BaseModule {
 
   override def configure: Unit = {
-    // bind[GethEthereumClient]
   }
 
   @Provides @Singleton

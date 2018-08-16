@@ -12,11 +12,8 @@ object Main extends App {
 
   val injector = Guice.createInjector(new SysAndConfigModule(args), ServiceModule)
   implicit val sys = injector.getInstance(classOf[ActorSystem])
-  //  implicit val mat = injector.getInstance(classOf[ActorMaterializer])
 
   val actor = injector.getActor("GethActor")
-
-  println("actor ==>>" + actor)
 
   println(logo)
 

@@ -15,7 +15,6 @@ import akka.routing.Router
 trait ServiceModule extends BaseModule { self ⇒
 
   override def configure: Unit = {
-    //bind[SimpleRoutingLogic]
   }
 
   @Provides @Singleton
@@ -27,7 +26,6 @@ trait ServiceModule extends BaseModule { self ⇒
   @Provides @Singleton @Named("ClusterClient")
   def provideClusterPros(@Inject() sys: ActorSystem): ActorRef = {
     // 使用 AdaptiveLoadBalancingGroup 可以达到均衡
-    // val a = Router(logic, routees)
     sys.actorOf(ClusterRouterGroup(
       AdaptiveLoadBalancingGroup(HeapMetricsSelector),
       ClusterRouterGroupSettings(
