@@ -42,7 +42,7 @@ object Settings {
       new Dockerfile {
         from("java:8u111-jre") // 这里还是默认的openjdk 不知道为什么
         entryPoint(s"$targetDir/bin/${executableScriptName.value}")
-        expose(8080)
+        expose(20552)
         // container(containerId)
         copy(appDir, targetDir, chown = "daemon:daemon")
       }

@@ -87,7 +87,7 @@ sbt worker/docker:publishLocal
 
 docker images
 
-docker run -it -p 8080:8080 worker:0.1.0-SNAPSHOT / docker run -d -p 8080:8080 --name worker worker:0.1.0-SNAPSHOT
+docker run -it -p 20552:20552 worker:0.1.0-SNAPSHOT / docker run -d -p 20552:20552 --name worker worker:0.1.0-SNAPSHOT
 
 ```
 

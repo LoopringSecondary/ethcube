@@ -16,6 +16,8 @@ object Main extends App {
 
   val actor = injector.getActor("GethActor")
 
+  println("actor ==>>" + actor)
+
   println(logo)
 
   lazy val logo = """
