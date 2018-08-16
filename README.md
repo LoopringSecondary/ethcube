@@ -19,7 +19,27 @@ Worker 节点对外是以Actor调用, 参数是以protobuf定义, Worker 节点�
 
 # 运行
 
-以下命令都是在工程路径下面执行
+以下命令都是在工程路径下面执行, 运行项目可以使用环境变量或是命令行参数
+
+以下两种方式结果一样, 自动加载 application.conf 和 conf/test.conf
+
+如果不使用参数, 自动加载 application.conf 和 conf/dev.conf
+
+
+例如 1: 
+
+```
+export env="test"
+
+sbt root/run
+```
+
+例如 2: 
+
+
+```
+sbt "root/run test"
+```
 
 ## 编译
 
@@ -45,6 +65,31 @@ sbt root/run
 sbt worker/run
 ```
 
+## docker 运行
+
+### root docker
+
+```
+
+sbt root/docker:publishLocal
+
+docker images
+
+docker run -it -p 8080:8080 root:0.1.0-SNAPSHOT / docker run -d -p 8080:8080 --name root root:0.1.0-SNAPSHOT
+
+```
+
+### worker docker
+
+```
+
+sbt worker/docker:publishLocal
+
+docker images
+
+docker run -it -p 20552:20552 worker:0.1.0-SNAPSHOT / docker run -d -p 20552:20552 --name worker worker:0.1.0-SNAPSHOT
+
+```
 
 
 # 功能

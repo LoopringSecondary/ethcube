@@ -1,33 +1,27 @@
 package io.upblockchain.worker
 
-import java.util.concurrent.TimeUnit
-
 import io.upblockchain.common._
 import com.google.inject.Guice
 import akka.actor.ActorSystem
-import akka.cluster.client.ClusterClientReceptionist
-import io.upblockchain.worker.modules.{ GethIpcConfig, ServiceModule }
 import akka.stream.ActorMaterializer
-import akka.util.Timeout
-import io.upblockchain.worker.services.StatsMonitor
-import scala.reflect.io.Path
+import io.upblockchain.common.ActorInjector
+import io.upblockchain.common.modules.SysAndConfigModule
+import io.upblockchain.worker.modules.ServiceModule
 
 object Main extends App {
-  import scala.concurrent.ExecutionContext.Implicits.global
 
-  implicit val timeout = Timeout.apply(3, TimeUnit.SECONDS)
-  val injector = Guice.createInjector(ServiceModule)
-  implicit val system = injector.getInstance(classOf[ActorSystem])
-  implicit val mat = injector.getInstance(classOf[ActorMaterializer])
+  val injector = Guice.createInjector(new SysAndConfigModule(args), ServiceModule)
+  implicit val sys = injector.getInstance(classOf[ActorSystem])
 
-  val gethIpcConfig = injector.getInstance(classOf[GethIpcConfig])
-  val path: Path = Path(gethIpcConfig.ipcPath)
-  if (!path.exists) {
-    println(gethIpcConfig.ipcPath, "not exists")
-    system.terminate()
-  }
-  val clientRouter = injector.getActor("ClientRouter")
-  ClusterClientReceptionist(system).registerService(clientRouter)
+  val actor = injector.getActor("GethActor")
 
-  val monitor = system.actorOf(StatsMonitor.props(clientRouter))
+  println(logo)
+
+  lazy val logo = """
+   _       __           __            
+  | |     / /___  _____/ /_____  _____
+  | | /| / / __ \/ ___/ //_/ _ \/ ___/
+  | |/ |/ / /_/ / /  / ,< /  __/ /    
+  |__/|__/\____/_/  /_/|_|\___/_/     """
+
 }

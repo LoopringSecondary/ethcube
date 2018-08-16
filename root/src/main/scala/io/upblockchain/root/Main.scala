@@ -1,27 +1,34 @@
 package io.upblockchain.root
 
+import io.upblockchain.common._
 import com.google.inject.Guice
-import akka.actor.{ ActorRef, ActorSystem, Props }
-import akka.cluster.Cluster
+import com.typesafe.config.Config
+
+import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.stream.ActorMaterializer
-import io.upblockchain.root.modules._
-import io.upblockchain.root.routees.{ RootRoute }
-import com.typesafe.config.Config
-import io.upblockchain.root.router.{ EthWorkerGroup, RootRouter }
+import io.upblockchain.common.modules.SysAndConfigModule
+import io.upblockchain.root.modules.ServiceModule
+import io.upblockchain.root.endpoints.RootEndpoints
+import akka.cluster.Cluster
 
 object Main extends App {
 
-  val injector = Guice.createInjector(ServiceModule)
+  val injector = Guice.createInjector(new SysAndConfigModule(args), ServiceModule)
+  val config = injector.getInstance(classOf[Config])
 
   implicit val system = injector.getInstance(classOf[ActorSystem])
   implicit val mat = injector.getInstance(classOf[ActorMaterializer])
 
-  implicit val cluster = Cluster(system)
-  //  val r = injector.getInstance(classOf[RootRoute])
-  //  val config = injector.getInstance(classOf[Config])
-  //
-  //  Http().bindAndHandle(r(), config.getString("http.interface"), config.getInt("http.port"))
+  val cluster = injector.getInstance(classOf[Cluster])
+
+  val clusterClient = injector.getActor("ClusterClient")
+
+  val r = injector.getInstance(classOf[RootEndpoints])
+
+  // startup web app
+  Http().bindAndHandle(r(), config.getString("http.host"), config.getInt("http.port"))
+
   println(logo)
 
   lazy val logo = """
@@ -31,6 +38,4 @@ object Main extends App {
    / _, _/ /_/ / /_/ / /_  
   /_/ |_|\____/\____/\__/  """
 
-  val paths = Seq()
-  system.actorOf(Props(new RootRouter(collection.immutable.Seq(paths: _*))))
 }

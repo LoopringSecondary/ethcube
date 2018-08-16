@@ -5,50 +5,12 @@ import Settings._
 import Dependencies._
 
 lazy val proto = (project in file("proto"))
-  // .enablePlugins(AkkaGrpcPlugin)
   .settings(
-    libraryDependencies ++= Seq(
-      "com.thesamet.scalapb" %% "scalapb-runtime" % scalapb.compiler.Version.scalapbVersion,
-      "com.thesamet.scalapb" %% "scalapb-runtime" % scalapb.compiler.Version.scalapbVersion % "protobuf",
-      "com.github.jnr" % "jnr-unixsocket" % "0.18"
-      // "com.thesamet.scalapb" %% "scalapb-runtime" % scalapb.compiler.Version.scalapbVersion
-
-    ),
-    // libraryDependencies ++= commonDependency
-    // other settings
-
-    // enablePlugins(AkkaGrpcPlugin)
-    // baseDirectory.value
+    libraryDependencies ++= scalapbDependency,
 
     PB.targets in Compile := Seq(
       scalapb.gen() -> (sourceManaged in Compile).value
     )
-
-    // PB.protoSources in Compile := Seq(
-    //   // baseDirectory.value
-    //   baseDirectory.value
-    // ),
-    // PB.targets in Compile := Seq(
-    //   scalapb.gen() -> (sourceManaged in Compile).value
-    // )
-
-    // scalapb.gen() -> (sourceManaged in Compile).value
-
-    // PB.protoSources in Compile := {
-    //   println(sourceDirectory.value)
-    //   Seq(
-    //   // baseDirectory.value
-    //     sourceDirectory.value / "main" / "proto"
-    //   )
-    // },
-    // PB.targets in Compile := Seq(
-    //   scalapb.gen() -> (sourceManaged in Compile).value
-    // )
-
-    // PB.targets in Compile := Seq(
-    //   scalapb.gen()       -> (sourceManaged in Compile).value,
-    //   RpcLibCodeGenerator -> (sourceManaged in Compile).value
-    // )
   )
 
 
@@ -56,37 +18,30 @@ lazy val common = (project in file("common"))
   .dependsOn(proto)
   .settings(
     libraryDependencies ++= commonDependency
-    // other settings
   )
 
+
 lazy val worker = (project in file("worker"))
+  .enablePlugins(sbtdocker.DockerPlugin, JavaAppPackaging)
   .dependsOn(common)
   .settings(
-    libraryDependencies ++= jsonRPCDependency
-    // other settings
+    dockerSettings,
+    libraryDependencies ++= akkaDependency ++ socketDependency
   )
 
 
 lazy val root = (project in file("root"))
+  .enablePlugins(sbtdocker.DockerPlugin, JavaAppPackaging)
   .dependsOn(common)
   .settings(
-    libraryDependencies ++= jsonRPCDependency
-    // other settings
+    dockerSettings,
+    libraryDependencies ++= akkaDependency
   )
-
-
-// lazy val all = Project(id = "hello", base = file("."))
-//   .aggregate(root, worker, common)
-//   .settings(
-//     basicSettings,
-//     update / aggregate := false
-//     // other settings
-//   )
 
 lazy val all = (project in file("."))
   .aggregate(proto, common, root, worker)
   .settings(
     basicSettings,
     update / aggregate := false
-    // other settings
   )
+

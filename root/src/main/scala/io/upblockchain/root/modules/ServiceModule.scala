@@ -1,35 +1,37 @@
 package io.upblockchain.root.modules
 
-import io.upblockchain.common.modules.BaseModule
 import com.google.inject.{ Provides, Singleton }
-import akka.actor.{ ActorRef, ActorSystem, Props }
-import akka.stream.ActorMaterializer
-import javax.inject.Inject
-import io.upblockchain.root.services.EthJsonRPCService
-import javax.inject.Named
-import akka.cluster.client.ClusterClient
-import akka.cluster.client.ClusterClientSettings
-import com.typesafe.config.Config
-import com.typesafe.config.ConfigFactory
 
-trait ServiceModule extends BaseModule {
+import akka.actor.{ ActorRef, ActorSystem }
+import akka.cluster.metrics.{ AdaptiveLoadBalancingGroup, HeapMetricsSelector }
+import akka.cluster.routing.{ ClusterRouterGroup, ClusterRouterGroupSettings }
+import akka.stream.ActorMaterializer
+import io.upblockchain.common.modules.BaseModule
+import javax.inject.{ Inject, Named }
+import akka.actor.Props
+import akka.cluster.Cluster
+import akka.routing.Router
+
+trait ServiceModule extends BaseModule { self ⇒
 
   override def configure: Unit = {
-    bind[EthJsonRPCService]
   }
-
-  @Provides @Singleton
-  def provideConfig: Config = ConfigFactory load
-
-  @Provides @Singleton
-  def provideActorSystem(@Inject() config: Config): ActorSystem = ActorSystem("ClusterSystem", config)
 
   @Provides @Singleton
   def provideActorMaterializer(@Inject() sys: ActorSystem): ActorMaterializer = ActorMaterializer()(sys)
 
+  @Provides @Singleton
+  def provideCluster(@Inject() sys: ActorSystem): Cluster = Cluster(sys)
+
   @Provides @Singleton @Named("ClusterClient")
   def provideClusterPros(@Inject() sys: ActorSystem): ActorRef = {
-    sys.actorOf(ClusterClient.props(ClusterClientSettings(sys)), "cluster_client")
+    // 使用 AdaptiveLoadBalancingGroup 可以达到均衡
+    sys.actorOf(ClusterRouterGroup(
+      AdaptiveLoadBalancingGroup(HeapMetricsSelector),
+      ClusterRouterGroupSettings(
+        totalInstances = 100,
+        routeesPaths = List("/user/gethActor"),
+        allowLocalRoutees = false)).props(), "clusterBalanceGroup")
   }
 
 }
