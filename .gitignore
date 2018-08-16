@@ -8,4 +8,5 @@ bin/
 .classpath
 .project
 .idea/
+logs/
 *.iml
