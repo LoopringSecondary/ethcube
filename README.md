@@ -79,7 +79,7 @@ docker run -it -p 8080:8080 root:0.1.0-SNAPSHOT / docker run -d -p 8080:8080 --n
 
 ```
 
-### worker docker
+### worker docker (这里还有点问题, 暂时不能这么用)
 
 ```
 
