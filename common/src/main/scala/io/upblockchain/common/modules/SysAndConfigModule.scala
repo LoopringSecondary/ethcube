@@ -25,11 +25,12 @@ class SysAndConfigModule(args: Array[String]) extends AbstractModule with ScalaM
 
     println(s"load configuration file : conf/${env}")
 
-    val config = ConfigFactory.load(env) // .withFallback(ConfigFactory.load())
+    // TODO(Toan) 这里还需要优化
+    ConfigFactory.load(env) // .withFallback(ConfigFactory.load())
 
-    println("tcp: ===>>>" + config)
+    // println("tcp: ===>>>" + config)
 
-    config
+    // config
   }
 
   @Provides @Singleton
