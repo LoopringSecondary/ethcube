@@ -30,6 +30,7 @@ class RootEndpoints @Inject() (@Named("ClusterClient") cluster: ActorRef, sys: A
       pathEndOrSingleSlash {
         entity(as[JsonRPCRequestWrapped]) { req ⇒
           Log.info(s"http request => ${req}")
+          // complete("Ok")
           onSuccess(handleClientRequest(req.toRequest)) { resp ⇒
             Log.info(s"http response => ${resp.json}")
             complete(parse(resp.json))

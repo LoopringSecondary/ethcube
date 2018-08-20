@@ -1,0 +1,13 @@
+version: '2'
+
+services:
+  root:
+    image: root:0.1.0-SNAPSHOT
+    ports:
+    	- 8080:8080
+    	- 20550:20550
+
+  worker1:
+  	image: worker:0.1.0-SNAPSHOT
+  	ports:
+    	- 20552:20552

@@ -22,7 +22,7 @@ lazy val common = (project in file("common"))
 
 
 lazy val worker = (project in file("worker"))
-  .enablePlugins(sbtdocker.DockerPlugin, JavaAppPackaging)
+  .enablePlugins(DockerPlugin, JavaAppPackaging)
   .dependsOn(common)
   .settings(
     dockerSettings,
@@ -31,7 +31,7 @@ lazy val worker = (project in file("worker"))
 
 
 lazy val root = (project in file("root"))
-  .enablePlugins(sbtdocker.DockerPlugin, JavaAppPackaging)
+  .enablePlugins(DockerPlugin, JavaAppPackaging)
   .dependsOn(common)
   .settings(
     dockerSettings,
