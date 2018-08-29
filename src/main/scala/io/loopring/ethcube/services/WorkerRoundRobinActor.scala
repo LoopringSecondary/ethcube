@@ -16,9 +16,11 @@ class WorkerRoundRobinActor @Inject() (@Named("RoundRobinRouter") router: Router
     case s: JsonRpcRequest ⇒
       println("router ==>>>" + router)
       println("actor BroadcastRouter message to ")
-    // router.route(akka.routing.Broadcast(s), sender)
+      // TODO(Toan) 这里做正常转发, 当有NoRoutee的时候还没处理
+      router.route(s, sender)
 
     case Terminated(a) ⇒
+    // TODO(Toan) 这里可以去掉
     //      router = router.removeRoutee(a)
     //      val r = context.actorOf(Props[WorkerRoutee])
     //      context watch r

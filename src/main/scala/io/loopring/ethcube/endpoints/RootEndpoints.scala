@@ -16,6 +16,7 @@ import scala.concurrent.duration._
 class RootEndpoints @Inject() (@Named("WorkerRoundRobinActor") actor: ActorRef) extends JsonSupport {
 
   def apply(): Route = {
+    // TODO(Toan) 这里需要添加日志
     handleExceptions(myExceptionHandler) {
       pathEndOrSingleSlash {
         entity(as[JsonRpcRequest]) { req ⇒
@@ -32,7 +33,6 @@ class RootEndpoints @Inject() (@Named("WorkerRoundRobinActor") actor: ActorRef) 
   implicit val timeout = Timeout(5 seconds)
 
   private[endpoints] def handleClientRequest(req: JsonRpcRequest): Future[JsonRpcRequest] = {
-    // Future.successful(req)
     (actor ? req).mapTo[JsonRpcRequest]
   }
 

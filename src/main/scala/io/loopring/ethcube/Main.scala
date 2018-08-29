@@ -12,6 +12,9 @@ import io.loopring.ethcube.endpoints.RootEndpoints
 import scala.concurrent.duration._
 import io.loopring.ethcube.services.Test1
 
+/**
+ * entry main function
+ */
 object Main extends App {
 
   val injector = Guice.createInjector(new SysAndConfigModule(args), ServicesModule)
@@ -20,16 +23,16 @@ object Main extends App {
 
   implicit val sys = injector.getInstance(classOf[ActorSystem])
   implicit val mat = injector.getInstance(classOf[ActorMaterializer])
-
   import sys.dispatcher
 
+  // monitor actor
   val receiver = injector.getActor("WorkerMonitorActor")
   sys.scheduler.schedule(initialDelay = 1 seconds, interval = 5 seconds, receiver = receiver, Test1)
 
-  // sys.scheduler.schedule(initialDelay = 3 seconds, interval = 5 seconds, )
-
+  // http server
   val r = injector.getInstance(classOf[RootEndpoints])
-
+  // TODO(Toan) 这里需要从config读取
+  // 这里还需要添加 websocket
   Http().bindAndHandle(r(), "0.0.0.0", 9000)
 
   println(logo)

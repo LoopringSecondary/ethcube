@@ -14,6 +14,7 @@ class SysAndConfigModule(args: Array[String]) extends AbstractModule with ScalaM
 
   def provideConfig: Config = {
 
+    // TODO(Toan) 这里需要修改调整
     val env = {
       val envProperty = System.getProperty("env")
       val envSystem = if (envProperty == null) System.getenv("env") else envProperty

@@ -19,8 +19,10 @@ class WorkerMonitorActor @Inject() (@Named("BroadcastRouter") router: Router) ex
       router.route(Broadcast("start"), sender)
     case Test2 ⇒
       println("receive =>> " + i.getAndIncrement + "===>>>")
-      
-      // router.removeRoutee(ActorSelection.apply(anchorRef, path))
+    // TODO(Toan) 这里需要修改 判断逻辑
+    // 去掉 routee 或者 做其他处理
+    // 上面的参数需要修改
+    // router.removeRoutee(ActorSelection.apply(anchorRef, path))
 
   }
 

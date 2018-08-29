@@ -47,6 +47,7 @@ trait ServicesModule extends BaseModule { self ⇒
 
   @Provides @Singleton @Named("WorkerRoutees")
   def provideWorkerRoutees(@Inject() sys: ActorSystem): Seq[ActorRefRoutee] = {
+    // TODO(Toan) 这里需要从配置读取
     Seq.range(1, 5).map { index ⇒
       sys.actorOf(Props[WorkerServiceRoutee], s"Worker-${index}")
     }.map(ActorRefRoutee)
