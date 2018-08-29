@@ -40,8 +40,8 @@ object Dependencies {
 	)
 
 
-	lazy val scalapbDependency = Seq(
-		"com.thesamet.scalapb" %% "scalapb-runtime" % scalapb.compiler.Version.scalapbVersion,
-    "com.thesamet.scalapb" %% "scalapb-runtime" % scalapb.compiler.Version.scalapbVersion % "protobuf",
-	)
+	// lazy val scalapbDependency = Seq(
+	// 	"com.thesamet.scalapb" %% "scalapb-runtime" % scalapb.compiler.Version.scalapbVersion,
+ //    "com.thesamet.scalapb" %% "scalapb-runtime" % scalapb.compiler.Version.scalapbVersion % "protobuf",
+	// )
 }	
