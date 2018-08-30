@@ -15,7 +15,7 @@ class WorkerRoundRobinActor @Inject() (@Named("RoundRobinRouter") router: Router
   def receive: Actor.Receive = {
     case s: JsonRpcRequest ⇒
       println("router ==>>>" + router)
-      println("actor BroadcastRouter message to ")
+      println("actor Router message to ")
       // TODO(Toan) 这里做正常转发, 当有NoRoutee的时候还没处理
       router.route(s, sender)
 

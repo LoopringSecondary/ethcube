@@ -10,7 +10,7 @@ import akka.stream.ActorMaterializer
 import akka.http.scaladsl.Http
 import io.loopring.ethcube.endpoints.RootEndpoints
 import scala.concurrent.duration._
-import io.loopring.ethcube.services.Test1
+import io.loopring.ethcube.model.BroadcastRequest
 
 /**
  * entry main function
@@ -27,21 +27,25 @@ object Main extends App {
 
   // monitor actor
   val receiver = injector.getActor("WorkerMonitorActor")
-  sys.scheduler.schedule(initialDelay = 1 seconds, interval = 5 seconds, receiver = receiver, Test1)
+  sys.scheduler.schedule(initialDelay = 3 seconds, interval = 10 seconds, receiver = receiver, BroadcastRequest)
 
   // http server
   val r = injector.getInstance(classOf[RootEndpoints])
-  // TODO(Toan) 这里需要从config读取
-  // 这里还需要添加 websocket
-  Http().bindAndHandle(r(), "0.0.0.0", 9000)
+
+  val host = config.getString("http.host")
+  val port = config.getInt("http.port")
+
+  Http().bindAndHandle(r(), host, port)
+
+  // TODO(Toan)这里还需要添加 websocket
 
   println(logo)
 
   lazy val logo = """
-    ________  __    ______      __       
-   / ____/ /_/ /_  / ____/_  __/ /_  ___ 
-  / __/ / __/ __ \/ /   / / / / __ \/ _ \
- / /___/ /_/ / / / /___/ /_/ / /_/ /  __/
-/_____/\__/_/ /_/\____/\__,_/_.___/\___/  """
+      ________  __    ______      __       
+     / ____/ /_/ /_  / ____/_  __/ /_  ___ 
+    / __/ / __/ __ \/ /   / / / / __ \/ _ \
+   / /___/ /_/ / / / /___/ /_/ / /_/ /  __/
+  /_____/\__/_/ /_/\____/\__,_/_.___/\___/  """ + s"http://${host}:${port}"
 
 }

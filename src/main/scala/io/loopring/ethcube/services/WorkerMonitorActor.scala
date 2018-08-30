@@ -6,19 +6,22 @@ import javax.inject.Named
 import akka.routing.Router
 import akka.routing.Broadcast
 import akka.actor.ActorSelection
+import io.loopring.ethcube.model.BroadcastRequest
+import io.loopring.ethcube.model.BroadcastResponse
 
-case object Test1
-case object Test2
-
-class WorkerMonitorActor @Inject() (@Named("BroadcastRouter") router: Router) extends Actor {
+class WorkerMonitorActor(broadcastRouter: Router, roundRobinRouter: Router) extends Actor {
 
   val i = new java.util.concurrent.atomic.AtomicInteger
 
   def receive: Actor.Receive = {
-    case Test1 ⇒
-      router.route(Broadcast("start"), sender)
-    case Test2 ⇒
-      println("receive =>> " + i.getAndIncrement + "===>>>")
+    case BroadcastRequest ⇒
+      broadcastRouter.route(Broadcast("start"), sender)
+    case s: BroadcastResponse ⇒
+      println("receive =>> " + i.getAndIncrement + "===>>>" + s.label)
+    // println("receive =>> " + i.getAndIncrement + "===>>>")
+
+    // roundRobinRouter.routees.size
+    //      roundRobinRouter.add
     // TODO(Toan) 这里需要修改 判断逻辑
     // 去掉 routee 或者 做其他处理
     // 上面的参数需要修改

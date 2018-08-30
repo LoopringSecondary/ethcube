@@ -16,6 +16,9 @@ import scala.collection.immutable
 import io.loopring.ethcube.services.WorkerRoundRobinActor
 import akka.routing.BroadcastRoutingLogic
 import io.loopring.ethcube.services.WorkerMonitorActor
+import com.typesafe.config.Config
+import io.loopring.ethcube.client.geth.GethHttpEtherClientImpl
+import io.loopring.ethcube.client.geth.GethIpcEtherClientImpl
 
 trait ServicesModule extends BaseModule { self ⇒
 
@@ -31,8 +34,11 @@ trait ServicesModule extends BaseModule { self ⇒
   }
 
   @Provides @Singleton @Named("WorkerMonitorActor")
-  def provideWorkerMonitorActor(@Inject() sys: ActorSystem, @Named("BroadcastRouter") router: Router) = {
-    sys.actorOf(Props(classOf[WorkerMonitorActor], router), "WorkerMonitorActor")
+  def provideWorkerMonitorActor(
+    @Inject() sys: ActorSystem,
+    @Named("BroadcastRouter") router1: Router,
+    @Named("RoundRobinRouter") router2: Router) = {
+    sys.actorOf(Props(classOf[WorkerMonitorActor], router1, router2), "WorkerMonitorActor")
   }
 
   @Provides @Singleton @Named("RoundRobinRouter")
@@ -46,13 +52,38 @@ trait ServicesModule extends BaseModule { self ⇒
   }
 
   @Provides @Singleton @Named("WorkerRoutees")
-  def provideWorkerRoutees(@Inject() sys: ActorSystem): Seq[ActorRefRoutee] = {
-    // TODO(Toan) 这里需要从配置读取
-    Seq.range(1, 5).map { index ⇒
-      sys.actorOf(Props[WorkerServiceRoutee], s"Worker-${index}")
+  def provideWorkerRoutees(@Inject() sys: ActorSystem, @Named("EtherClientActorRefs") actors: Seq[ActorRef]): Seq[ActorRefRoutee] = {
+
+    actors.zipWithIndex.map {
+      case (ac, index) ⇒
+        sys.actorOf(Props(classOf[WorkerServiceRoutee], sys, ac), s"Worker-${index}")
     }.map(ActorRefRoutee)
+
+  }
+
+  @Provides @Singleton @Named("EtherClientActorRefs")
+  def provideEtherClientActorRefs(@Inject() sys: ActorSystem, mat: ActorMaterializer, config: Config): Seq[ActorRef] = {
+
+    import scala.collection.JavaConverters._
+
+    def provideClientConfig: PartialFunction[Config, ActorRef] = {
+      case cfg ⇒
+        cfg.getString("ipc_or_http") match {
+          case "ipc" ⇒
+            val c = EtherClientConfig("", -1, cfg.getString("ipcpath"))
+            sys.actorOf(Props(classOf[GethIpcEtherClientImpl], sys, mat, c), cfg.getString("label"))
+          case "http" ⇒
+            val c = EtherClientConfig(cfg.getString("host"), cfg.getInt("port"), cfg.getString("label"))
+            sys.actorOf(Props(classOf[GethHttpEtherClientImpl], sys, mat, c))
+          case _ ⇒ throw new Exception("can not match geth ipc or http")
+        }
+    }
+
+    config.getObjectList("clients").asScala.map(_.toConfig).map(provideClientConfig)
   }
 
 }
 
 object ServicesModule extends ServicesModule
+
+case class EtherClientConfig(host: String, port: Int, ipcPath: String)
