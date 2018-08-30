@@ -29,8 +29,13 @@ import akka.util.ByteString
 import akka.http.scaladsl.model.HttpEntity
 import akka.pattern.pipe
 import io.loopring.ethcube.model.BroadcastResponse
+import akka.http.scaladsl.marshalling.Marshal
+import akka.http.scaladsl.model.RequestEntity
+import akka.http.scaladsl.unmarshalling.Unmarshal
+import io.loopring.ethcube.common.json.JsonSupport
+import io.loopring.ethcube.model.JsonRpcResponse
 
-class GethHttpEtherClientImpl(sys: ActorSystem, mat: ActorMaterializer, val config: EtherClientConfig) extends EtherClient with Actor {
+class GethHttpEtherClientImpl(sys: ActorSystem, mat: ActorMaterializer, val config: EtherClientConfig) extends EtherClient with Actor with JsonSupport {
 
   lazy val Log = LoggerFactory.getLogger(getClass)
   implicit val materilizer = mat
@@ -64,20 +69,17 @@ class GethHttpEtherClientImpl(sys: ActorSystem, mat: ActorMaterializer, val conf
     }
   }
 
+  private def jsonRpcRequest(req: JsonRpcRequest): Future[JsonRpcResponse] = {
+    for {
+      reqEntity ← Marshal(req).to[RequestEntity]
+      httpResp ← request(HttpRequest(method = HttpMethods.POST, entity = reqEntity))
+      jsonRpcResp ← Unmarshal(httpResp).to[JsonRpcResponse]
+    } yield jsonRpcResp
+  }
+
   def receive: Actor.Receive = {
     case req: JsonRpcRequest ⇒
-      //      val httpReq = HttpRequest(
-      //        method = HttpMethods.POST,
-      //        // TODO(Toan) 这里的json需要处理
-      //        entity = HttpEntity(ContentTypes.`application/json`, ByteString("")))
-      //      val resp = for {
-      //        httpResp ← request(httpReq)
-      //        jsonResp ← httpResp.entity.dataBytes.map(_.utf8String).runReduce(_ + _)
-      //        _ = Log.info(s"geth http client json response => ${jsonResp}")
-      //      } yield jsonResp // JsonRPCResponse(id = req.id, json = jsonResp)
-
-      Future.successful(BroadcastResponse(label = context.self.path.address.toString)) pipeTo sender
-
+      jsonRpcRequest(req) pipeTo sender
   }
 
 }

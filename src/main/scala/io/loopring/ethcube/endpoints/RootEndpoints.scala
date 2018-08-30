@@ -2,7 +2,6 @@ package io.loopring.ethcube.endpoints
 
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.server.Directives._
-import io.loopring.ethcube.model.JsonRpcRequest
 import io.loopring.ethcube.common.json.JsonSupport
 import com.google.inject.{ Provides, Singleton }
 import javax.inject.{ Inject, Named }
@@ -11,6 +10,7 @@ import scala.concurrent.Future
 import akka.pattern.ask
 import akka.util.Timeout
 import scala.concurrent.duration._
+import io.loopring.ethcube.model.JsonRpcRequest
 
 @Provides @Singleton
 class RootEndpoints @Inject() (@Named("WorkerRoundRobinActor") actor: ActorRef) extends JsonSupport {
@@ -20,9 +20,7 @@ class RootEndpoints @Inject() (@Named("WorkerRoundRobinActor") actor: ActorRef) 
     handleExceptions(myExceptionHandler) {
       pathEndOrSingleSlash {
         entity(as[JsonRpcRequest]) { req ⇒
-          // Log.info(s"http request => ${req}")
           onSuccess(handleClientRequest(req)) { resp ⇒
-            // Log.info(s"http response => ${resp.json}")
             complete(req)
           }
         }

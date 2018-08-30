@@ -54,9 +54,8 @@ trait ServicesModule extends BaseModule { self ⇒
   @Provides @Singleton @Named("WorkerRoutees")
   def provideWorkerRoutees(@Inject() sys: ActorSystem, @Named("EtherClientActorRefs") actors: Seq[ActorRef]): Seq[ActorRefRoutee] = {
 
-    actors.zipWithIndex.map {
-      case (ac, index) ⇒
-        sys.actorOf(Props(classOf[WorkerServiceRoutee], sys, ac), s"Worker-${index}")
+    actors.map { ac ⇒
+      sys.actorOf(Props(classOf[WorkerServiceRoutee], sys, ac), s"Worker_${ac.path.name}")
     }.map(ActorRefRoutee)
 
   }
@@ -68,13 +67,14 @@ trait ServicesModule extends BaseModule { self ⇒
 
     def provideClientConfig: PartialFunction[Config, ActorRef] = {
       case cfg ⇒
+        val label = cfg.getString("label")
         cfg.getString("ipc_or_http") match {
           case "ipc" ⇒
-            val c = EtherClientConfig("", -1, cfg.getString("ipcpath"))
-            sys.actorOf(Props(classOf[GethIpcEtherClientImpl], sys, mat, c), cfg.getString("label"))
+            val c = EtherClientConfig(label, "", -1, cfg.getString("ipcpath"))
+            sys.actorOf(Props(classOf[GethIpcEtherClientImpl], sys, mat, c), s"${label}")
           case "http" ⇒
-            val c = EtherClientConfig(cfg.getString("host"), cfg.getInt("port"), cfg.getString("label"))
-            sys.actorOf(Props(classOf[GethHttpEtherClientImpl], sys, mat, c))
+            val c = EtherClientConfig(label, cfg.getString("host"), cfg.getInt("port"), "")
+            sys.actorOf(Props(classOf[GethHttpEtherClientImpl], sys, mat, c), s"${label}")
           case _ ⇒ throw new Exception("can not match geth ipc or http")
         }
     }
@@ -86,4 +86,4 @@ trait ServicesModule extends BaseModule { self ⇒
 
 object ServicesModule extends ServicesModule
 
-case class EtherClientConfig(host: String, port: Int, ipcPath: String)
+case class EtherClientConfig(label: String, host: String, port: Int, ipcPath: String)

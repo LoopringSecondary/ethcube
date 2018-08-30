@@ -1,7 +1,6 @@
 package io.loopring.ethcube.services
 
 import akka.actor.Actor
-import io.loopring.ethcube.model.JsonRpcRequest
 import akka.routing.ConsistentHashingRoutingLogic
 import javax.inject.Inject
 import javax.inject.Named
@@ -13,12 +12,23 @@ import akka.pattern.pipe
 import akka.util.Timeout
 import scala.concurrent.duration._
 import akka.actor.ActorSystem
+import akka.actor.Identify
+import io.loopring.ethcube.model.JsonRpcRequest
+import io.loopring.ethcube.model.JsonRpcResponse
+import scala.concurrent.Future
 
-class WorkerServiceRoutee(sys: ActorSystem, client: ActorRef) extends Actor {
+class WorkerServiceRoutee(client: ActorRef) extends Actor {
 
-  import sys.dispatcher
+  import context.dispatcher
 
   implicit val timeout = Timeout(5 seconds)
+
+  private def doRequest(req: JsonRpcRequest): Future[JsonRpcResponse] = (client ? req).mapTo[JsonRpcResponse]
+
+  lazy val syncingJsonReq = JsonRpcRequest(id = 1, jsonrpc = "2.0", method = "eth_syncing", params = Seq.empty)
+
+  lazy val monitorActorPath = "/user/WorkerMonitorActor"
+
   /**
    * 分为以下几种情况:
    * 1、定时发送的消息, 直接请求客户端
@@ -31,23 +41,14 @@ class WorkerServiceRoutee(sys: ActorSystem, client: ActorRef) extends Actor {
    *  2.2 不可用的情况下(转发)
    */
   def receive: Actor.Receive = {
-    case s: JsonRpcRequest ⇒ sender ! s
-    case s: String ⇒
-      println("hahahah ==>>")
-      // TODO(Toan) 这里需要返回数据
-      val d = (client ? JsonRpcRequest(id = 1, jsonrpc = "", method = "", params = ""))
+    case req: JsonRpcRequest ⇒ doRequest(req) pipeTo sender
+    case BroadcastRequest ⇒
+      doRequest(syncingJsonReq).map { resp ⇒
+        // TODO(Toan) 这里要检测 result 类型
+        // resp.result
+        context.actorSelection(monitorActorPath) ! BroadcastResponse(label = context.self.path.name)
 
-    // d pipeTo sys.actorSelection("") //.resolveOne()
-
-    // sys.actorSelection(path)
-
-    // sys.actorSelection("/user/WorkerMonitorActor") !
-    // pipeTo sender
-    // client ? ""
-    // TODO(Toan) 完善上面的逻辑
-    // println("s ===>>>" + "###" + context.self.path)
-    // ! BroadcastResponse
-    // sender() ! Test2
+      }
   }
 
 }
