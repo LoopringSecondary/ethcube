@@ -55,7 +55,7 @@ trait ServicesModule extends BaseModule { self ⇒
   def provideWorkerRoutees(@Inject() sys: ActorSystem, @Named("EtherClientActorRefs") actors: Seq[ActorRef]): Seq[ActorRefRoutee] = {
 
     actors.map { ac ⇒
-      sys.actorOf(Props(classOf[WorkerServiceRoutee], sys, ac), s"Worker_${ac.path.name}")
+      sys.actorOf(Props(classOf[WorkerServiceRoutee], ac), s"Worker_${ac.path.name}")
     }.map(ActorRefRoutee)
 
   }

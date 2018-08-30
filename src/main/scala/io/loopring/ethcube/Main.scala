@@ -27,7 +27,7 @@ object Main extends App {
 
   // monitor actor
   val receiver = injector.getActor("WorkerMonitorActor")
-  sys.scheduler.schedule(initialDelay = 3 seconds, interval = 10 seconds, receiver = receiver, BroadcastRequest)
+  sys.scheduler.schedule(initialDelay = 3 seconds, interval = 100 seconds, receiver = receiver, BroadcastRequest)
 
   // http server
   val r = injector.getInstance(classOf[RootEndpoints])

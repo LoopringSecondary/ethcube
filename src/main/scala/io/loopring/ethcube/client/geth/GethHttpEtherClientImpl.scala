@@ -74,11 +74,14 @@ class GethHttpEtherClientImpl(sys: ActorSystem, mat: ActorMaterializer, val conf
       reqEntity ← Marshal(req).to[RequestEntity]
       httpResp ← request(HttpRequest(method = HttpMethods.POST, entity = reqEntity))
       jsonRpcResp ← Unmarshal(httpResp).to[JsonRpcResponse]
+      _ = println("jsonRpcResp ==>>" + jsonRpcResp)
     } yield jsonRpcResp
   }
 
   def receive: Actor.Receive = {
     case req: JsonRpcRequest ⇒
+      println("333333333333333")
+      println(req)
       jsonRpcRequest(req) pipeTo sender
   }
 

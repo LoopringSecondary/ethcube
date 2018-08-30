@@ -16,12 +16,18 @@ import akka.actor.Identify
 import io.loopring.ethcube.model.JsonRpcRequest
 import io.loopring.ethcube.model.JsonRpcResponse
 import scala.concurrent.Future
+import org.json4s.native.JsonMethods._
+import org.json4s.JsonAST.JValue
+import org.json4s.JsonAST.JString
+import scala.collection.immutable.Map
 
 class WorkerServiceRoutee(client: ActorRef) extends Actor {
 
   import context.dispatcher
 
   implicit val timeout = Timeout(5 seconds)
+
+  lazy val blockCap = 20
 
   private def doRequest(req: JsonRpcRequest): Future[JsonRpcResponse] = (client ? req).mapTo[JsonRpcResponse]
 
@@ -43,12 +49,66 @@ class WorkerServiceRoutee(client: ActorRef) extends Actor {
   def receive: Actor.Receive = {
     case req: JsonRpcRequest ⇒ doRequest(req) pipeTo sender
     case BroadcastRequest ⇒
+
+      println("22222222222222")
+
       doRequest(syncingJsonReq).map { resp ⇒
         // TODO(Toan) 这里要检测 result 类型
-        // resp.result
-        context.actorSelection(monitorActorPath) ! BroadcastResponse(label = context.self.path.name)
 
+        resp.result.map { result ⇒
+
+          try {
+            val jsonMap = result.asInstanceOf[Map[String, Any]]
+
+            val currentBlock = anyToBigInt((jsonMap.get("currentBlock")))
+            val highestBlock = anyToBigInt((jsonMap.get("highestBlock")))
+
+            println("currentBlock ==>>" + currentBlock)
+            println("highestBlock ==>>" + highestBlock)
+
+            if (currentBlock + blockCap <= highestBlock) {
+              println("1231231231")
+
+              context.actorSelection(monitorActorPath) ! BroadcastResponse(label = context.self.path.name)
+            }
+
+          } catch {
+            case ex: Exception ⇒ println("exceotuib::" + ex.getMessage)
+          }
+
+        }
       }
   }
+
+  def anyToBigInt: PartialFunction[Option[Any], BigInt] = {
+    case Some(s) ⇒ BigInt(s.asInstanceOf[String].substring(2), 16)
+    case _ ⇒ BigInt(0)
+  }
+
+  // parity client demo
+  //{
+  //  "jsonrpc": "2.0",
+  //  "result": {
+  //      "currentBlock": "0x5e9bec",
+  //      "highestBlock": "0x5f3850",
+  //      "startingBlock": "0x5e9bec",
+  //      "warpChunksAmount": "0x7bb",
+  //      "warpChunksProcessed": "0x559"
+  //  },
+  //  "id": 1
+  //}
+
+  // geth client demo
+  //{
+  //  "jsonrpc": "2.0",
+  //  "id": 1,
+  //  "result": {
+  //      "currentBlock": "0x5f0c82",
+  //      "highestBlock": "0x5f3408",
+  //      "knownStates": "0xbe1ac12",
+  //      "pulledStates": "0xbe1ac12",
+  //      "startingBlock": "0x5f0755"
+  //    }
+  //}
 
 }
