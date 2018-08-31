@@ -15,7 +15,6 @@ class WorkerMonitorActor(broadcastRouter: Router, roundRobinRouter: Router) exte
 
   def receive: Actor.Receive = {
     case BroadcastRequest ⇒
-      println("1111111111111111")
       broadcastRouter.route(Broadcast(BroadcastRequest), sender)
     case s: BroadcastResponse ⇒
       println("receive =>> " + i.getAndIncrement + "===>>>" + s.label)

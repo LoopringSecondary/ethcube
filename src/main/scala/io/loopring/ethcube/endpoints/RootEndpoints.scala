@@ -21,7 +21,7 @@ class RootEndpoints @Inject() (@Named("WorkerRoundRobinActor") actor: ActorRef) 
       pathEndOrSingleSlash {
         entity(as[JsonRpcRequest]) { req ⇒
           onSuccess(handleClientRequest(req)) { resp ⇒
-            complete(req)
+            complete(resp)
           }
         }
       }

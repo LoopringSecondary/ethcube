@@ -2,7 +2,6 @@ package io.loopring.ethcube.modules
 
 import io.loopring.ethcube.common.modules.BaseModule
 import com.google.inject.{ Provides, Singleton }
-import com.google.inject.Inject
 import akka.stream.ActorMaterializer
 import akka.actor.ActorSystem
 import akka.actor.ActorRef
@@ -19,6 +18,8 @@ import io.loopring.ethcube.services.WorkerMonitorActor
 import com.typesafe.config.Config
 import io.loopring.ethcube.client.geth.GethHttpEtherClientImpl
 import io.loopring.ethcube.client.geth.GethIpcEtherClientImpl
+import akka.http.scaladsl.server.Route
+import javax.inject.Inject
 
 trait ServicesModule extends BaseModule { self ⇒
 
