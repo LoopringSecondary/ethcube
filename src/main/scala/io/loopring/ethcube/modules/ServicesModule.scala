@@ -12,14 +12,14 @@ import akka.routing.Router
 import akka.routing.RoundRobinRoutingLogic
 import akka.routing.ActorRefRoutee
 import scala.collection.immutable
-import io.loopring.ethcube.services.WorkerRoundRobinActor
 import akka.routing.BroadcastRoutingLogic
-import io.loopring.ethcube.services.WorkerMonitorActor
 import com.typesafe.config.Config
 import io.loopring.ethcube.client.geth.GethHttpEtherClientImpl
 import io.loopring.ethcube.client.geth.GethIpcEtherClientImpl
 import akka.http.scaladsl.server.Route
 import javax.inject.Inject
+import akka.routing.ActorSelectionRoutee
+import io.loopring.ethcube.services.WorkerControlerActor
 
 trait ServicesModule extends BaseModule { self ⇒
 
@@ -29,17 +29,17 @@ trait ServicesModule extends BaseModule { self ⇒
   @Provides @Singleton
   def provideActorMaterializer(@Inject() sys: ActorSystem): ActorMaterializer = ActorMaterializer()(sys)
 
-  @Provides @Singleton @Named("WorkerRoundRobinActor")
-  def provideWorkerRoundRobinActor(@Inject() sys: ActorSystem, @Named("RoundRobinRouter") router: Router) = {
-    sys.actorOf(Props(classOf[WorkerRoundRobinActor], router), "WorkerRoundRobinActor")
-  }
+  //  @Provides @Singleton @Named("WorkerRoundRobinActor")
+  //  def provideWorkerRoundRobinActor(@Inject() sys: ActorSystem, @Named("RoundRobinRouter") router: Router) = {
+  //    sys.actorOf(Props(classOf[WorkerRoundRobinActor], router), "WorkerRoundRobinActor")
+  //  }
 
-  @Provides @Singleton @Named("WorkerMonitorActor")
+  @Provides @Singleton @Named("WorkerControlerActor")
   def provideWorkerMonitorActor(
     @Inject() sys: ActorSystem,
     @Named("BroadcastRouter") router1: Router,
     @Named("RoundRobinRouter") router2: Router) = {
-    sys.actorOf(Props(classOf[WorkerMonitorActor], router1, router2), "WorkerMonitorActor")
+    sys.actorOf(Props(classOf[WorkerControlerActor], router1, router2), "WorkerMonitorActor")
   }
 
   @Provides @Singleton @Named("RoundRobinRouter")
@@ -54,11 +54,9 @@ trait ServicesModule extends BaseModule { self ⇒
 
   @Provides @Singleton @Named("WorkerRoutees")
   def provideWorkerRoutees(@Inject() sys: ActorSystem, @Named("EtherClientActorRefs") actors: Seq[ActorRef]): Seq[ActorRefRoutee] = {
-
     actors.map { ac ⇒
       sys.actorOf(Props(classOf[WorkerServiceRoutee], ac), s"Worker_${ac.path.name}")
     }.map(ActorRefRoutee)
-
   }
 
   @Provides @Singleton @Named("EtherClientActorRefs")

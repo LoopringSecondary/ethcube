@@ -52,20 +52,28 @@ class WorkerServiceRoutee(client: ActorRef) extends Actor {
         resp.result.map { result ⇒
           Log.info(s"WorkerRoutee[${label}] get eth syning response => ${resp}")
           try {
-            val jsonMap = result.asInstanceOf[Map[String, Any]]
-            // 其他字段不做处理
-            val currentBlock = anyToBigInt((jsonMap.get("currentBlock")))
-            val highestBlock = anyToBigInt((jsonMap.get("highestBlock")))
 
-            Log.debug(s"WorkerRoutee[${label}] get eth syning block { currentBlock: ${currentBlock}, highestBlock:${highestBlock} }")
-
-            if (currentBlock + blockCap < highestBlock) {
-              Log.info(s"WorkerRoutee[${label}] check client failed to achieve the highest block, { currentBlock: ${currentBlock}, highestBlock:${highestBlock} }")
-              // 当前的高度不够高的话 WorkerRoutee 需要移出
-              context.actorSelection(monitorActorPath) ! BroadcastResponse(label = label, isValid = false)
+            if (result.isInstanceOf[Boolean]) {
+              result.asInstanceOf[Boolean] match {
+                case true ⇒ sendFailed
+                case false ⇒ sendSuccessed
+              }
             } else {
-              Log.info(s"WorkerRoutee[${label}] check successfuled, { currentBlock: ${currentBlock}, highestBlock:${highestBlock} }")
-              context.actorSelection(monitorActorPath) ! BroadcastResponse(label = label)
+              val jsonMap = result.asInstanceOf[Map[String, Any]]
+              // 其他字段不做处理
+              val currentBlock = anyToBigInt((jsonMap.get("currentBlock")))
+              val highestBlock = anyToBigInt((jsonMap.get("highestBlock")))
+
+              Log.debug(s"WorkerRoutee[${label}] get eth syning block { currentBlock: ${currentBlock}, highestBlock:${highestBlock} }")
+
+              if (currentBlock + blockCap < highestBlock) {
+                Log.info(s"WorkerRoutee[${label}] check client failed to has the highest block, { currentBlock: ${currentBlock}, highestBlock:${highestBlock} }")
+                // 当前的高度不够高的话 WorkerRoutee 需要移出
+                sendFailed
+              } else {
+                Log.info(s"WorkerRoutee[${label}] check successfuled, { currentBlock: ${currentBlock}, highestBlock:${highestBlock} }")
+                sendSuccessed
+              }
             }
 
           } catch {
@@ -75,6 +83,12 @@ class WorkerServiceRoutee(client: ActorRef) extends Actor {
         }
       }
   }
+
+  private[services] def sendFailed: Unit =
+    context.actorSelection(monitorActorPath) ! BroadcastResponse(actor = self, isValid = false)
+
+  private[services] def sendSuccessed: Unit =
+    context.actorSelection(monitorActorPath) ! BroadcastResponse(actor = self)
 
   def anyToBigInt: PartialFunction[Option[Any], BigInt] = {
     case Some(s) ⇒

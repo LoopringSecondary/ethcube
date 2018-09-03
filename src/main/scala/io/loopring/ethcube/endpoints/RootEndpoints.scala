@@ -11,18 +11,16 @@ import akka.pattern.ask
 import akka.util.Timeout
 import scala.concurrent.duration._
 import io.loopring.ethcube.model.JsonRpcRequest
+import io.loopring.ethcube.model.JsonRpcResponse
 
 @Provides @Singleton
-class RootEndpoints @Inject() (@Named("WorkerRoundRobinActor") actor: ActorRef) extends JsonSupport {
+class RootEndpoints @Inject() (@Named("WorkerControlerActor") actor: ActorRef) extends JsonSupport {
 
   def apply(): Route = {
-    // TODO(Toan) 这里需要添加日志
     handleExceptions(myExceptionHandler) {
       pathEndOrSingleSlash {
         entity(as[JsonRpcRequest]) { req ⇒
-          onSuccess(handleClientRequest(req)) { resp ⇒
-            complete(resp)
-          }
+          onSuccess(handleClientRequest(req)) { complete(_) }
         }
       }
     }
@@ -30,8 +28,8 @@ class RootEndpoints @Inject() (@Named("WorkerRoundRobinActor") actor: ActorRef) 
 
   implicit val timeout = Timeout(5 seconds)
 
-  private[endpoints] def handleClientRequest(req: JsonRpcRequest): Future[JsonRpcRequest] = {
-    (actor ? req).mapTo[JsonRpcRequest]
+  private[endpoints] def handleClientRequest(req: JsonRpcRequest): Future[JsonRpcResponse] = {
+    (actor ? req).mapTo[JsonRpcResponse]
   }
 
 }

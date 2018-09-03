@@ -14,29 +14,29 @@ import akka.util.Timeout
 import scala.concurrent.duration._
 import io.loopring.ethcube.model.JsonRpcResponse
 import akka.actor.ActorSystem
+import akka.http.scaladsl.model.HttpEntity
+import akka.stream.ActorMaterializer
 
 @Provides @Singleton
-class LooprEndpoints @Inject() (sys: ActorSystem, @Named("WorkerRoundRobinActor") actor: ActorRef) extends JsonSupport {
+class LooprEndpoints @Inject() (sys: ActorSystem, mat: ActorMaterializer, @Named("WorkerControlerActor") actor: ActorRef) extends RootEndpoints(actor) {
 
   import sys.dispatcher
 
-  def apply(): Route = {
-    pathPrefix("loopr") {
-      pathEndOrSingleSlash {
-        entity(as[Seq[JsonRpcRequest]]) { req ⇒
-          // onSuccess(handleClientRequest(req)) { resp ⇒
-          complete(req)
-          // }
+  implicit val m = mat
+
+  override def apply(): Route = {
+    handleExceptions(myExceptionHandler) {
+      pathPrefix("loopr") {
+        pathEndOrSingleSlash {
+          entity(as[Seq[JsonRpcRequest]]) { reqs ⇒
+            onSuccess(handleClientRequestSeq(reqs)) { complete(_) }
+          }
         }
       }
     }
   }
 
-  //  implicit val timeout = Timeout(5 seconds)
-  //
-  //  def getTransactionReceipt(txHashs: Seq[String]): Future[Seq[JsonRpcResponse]] = {
-  //    val json = JsonRpcRequest(id = 0, jsonrpc = "2.0", method = "eth_getTransactionReceipt", params = None)
-  //    Future.sequence(txHashs.map { x ⇒ json.copy(id = Random.nextInt(100), params = Seq(x)) }.map { x ⇒ (actor ? x).mapTo[JsonRpcResponse] })
-  //  }
+  def handleClientRequestSeq(reqs: Seq[JsonRpcRequest]): Future[Seq[JsonRpcResponse]] =
+    Future.sequence(reqs.map(handleClientRequest))
 
 }

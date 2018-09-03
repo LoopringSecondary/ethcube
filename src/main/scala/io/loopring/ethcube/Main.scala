@@ -32,7 +32,7 @@ object Main extends App {
   import sys.dispatcher
 
   // monitor actor
-  val receiver = injector.getActor("WorkerMonitorActor")
+  val receiver = injector.getActor("WorkerControlerActor")
   val initial = config.getInt("schedule.initial") seconds
   val interval = config.getInt("schedule.interval") seconds
 
