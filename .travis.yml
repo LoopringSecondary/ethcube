@@ -1,0 +1,19 @@
+{
+  "os": "linux",
+  "env": "JDK=oraclejdk8",
+  "jdk": "oraclejdk8",
+  "dist": "trusty",
+  "cache": {
+    "directories": [
+      "$HOME/.ivy2/cache",
+      "$HOME/.sbt/boot/",
+      "$HOME/.m2/repository"
+    ]
+  },
+  "group": "stable",
+  "scala": "2.12.6",
+  "script": [
+    "sbt -jvm-opts travis/jvmopts.compile test:compile"
+  ],
+  "language": "scala"
+}
