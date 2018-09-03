@@ -1,32 +1,26 @@
 package io.loopring.ethcube.services
 
-import akka.actor.Actor
-import akka.routing.ConsistentHashingRoutingLogic
-import javax.inject.Inject
-import javax.inject.Named
-import akka.actor.ActorRef
-import io.loopring.ethcube.model.BroadcastRequest
-import io.loopring.ethcube.model.BroadcastResponse
+import akka.actor.{ Actor, ActorRef }
+import javax.inject.{ Inject, Named }
+import io.loopring.ethcube.model._
 import akka.pattern.ask
 import akka.pattern.pipe
 import akka.util.Timeout
 import scala.concurrent.duration._
 import akka.actor.ActorSystem
 import akka.actor.Identify
-import io.loopring.ethcube.model.JsonRpcRequest
-import io.loopring.ethcube.model.JsonRpcResponse
 import scala.concurrent.Future
 import org.json4s.native.JsonMethods._
-import org.json4s.JsonAST.JValue
-import org.json4s.JsonAST.JString
-import scala.collection.immutable.Map
+import org.slf4j.LoggerFactory
 
 class WorkerServiceRoutee(client: ActorRef) extends Actor {
+
+  lazy val Log = LoggerFactory.getLogger(getClass)
 
   import context.dispatcher
 
   implicit val timeout = Timeout(5 seconds)
-
+  // 块最大差距
   lazy val blockCap = 20
 
   private def doRequest(req: JsonRpcRequest): Future[JsonRpcResponse] = (client ? req).mapTo[JsonRpcResponse]
@@ -34,6 +28,8 @@ class WorkerServiceRoutee(client: ActorRef) extends Actor {
   lazy val syncingJsonReq = JsonRpcRequest(id = 1, jsonrpc = "2.0", method = "eth_syncing", params = Seq.empty)
 
   lazy val monitorActorPath = "/user/WorkerMonitorActor"
+  // 当前节点名称
+  lazy val label = context.self.path.name
 
   /**
    * 分为以下几种情况:
@@ -47,41 +43,43 @@ class WorkerServiceRoutee(client: ActorRef) extends Actor {
    *  2.2 不可用的情况下(转发)
    */
   def receive: Actor.Receive = {
-    case req: JsonRpcRequest ⇒ doRequest(req) pipeTo sender
+    case req: JsonRpcRequest ⇒
+      Log.info(s"WorkerRoutee normal forword json rpc request => ${req}")
+      doRequest(req) pipeTo sender
     case BroadcastRequest ⇒
-
-      println("22222222222222")
-
+      Log.info(s"WorkerRoutee broadcast Request")
       doRequest(syncingJsonReq).map { resp ⇒
-        // TODO(Toan) 这里要检测 result 类型
-
         resp.result.map { result ⇒
-
+          Log.info(s"WorkerRoutee[${label}] get eth syning response => ${resp}")
           try {
             val jsonMap = result.asInstanceOf[Map[String, Any]]
-
+            // 其他字段不做处理
             val currentBlock = anyToBigInt((jsonMap.get("currentBlock")))
             val highestBlock = anyToBigInt((jsonMap.get("highestBlock")))
 
-            println("currentBlock ==>>" + currentBlock)
-            println("highestBlock ==>>" + highestBlock)
+            Log.debug(s"WorkerRoutee[${label}] get eth syning block { currentBlock: ${currentBlock}, highestBlock:${highestBlock} }")
 
-            if (currentBlock + blockCap <= highestBlock) {
-              println("1231231231")
-
-              context.actorSelection(monitorActorPath) ! BroadcastResponse(label = context.self.path.name)
+            if (currentBlock + blockCap < highestBlock) {
+              Log.info(s"WorkerRoutee[${label}] check client failed to achieve the highest block, { currentBlock: ${currentBlock}, highestBlock:${highestBlock} }")
+              // 当前的高度不够高的话 WorkerRoutee 需要移出
+              context.actorSelection(monitorActorPath) ! BroadcastResponse(label = label, isValid = false)
+            } else {
+              Log.info(s"WorkerRoutee[${label}] check successfuled, { currentBlock: ${currentBlock}, highestBlock:${highestBlock} }")
+              context.actorSelection(monitorActorPath) ! BroadcastResponse(label = label)
             }
 
           } catch {
-            case ex: Exception ⇒ println("exceotuib::" + ex.getMessage)
+            case ex: Exception ⇒
+              Log.error(s"syning parse json response error: ${resp}", ex)
           }
-
         }
       }
   }
 
   def anyToBigInt: PartialFunction[Option[Any], BigInt] = {
-    case Some(s) ⇒ BigInt(s.asInstanceOf[String].substring(2), 16)
+    case Some(s) ⇒
+      // 去掉 0x
+      BigInt(s.asInstanceOf[String].substring(2), 16)
     case _ ⇒ BigInt(0)
   }
 

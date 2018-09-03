@@ -37,7 +37,7 @@ object Main extends App {
   val interval = config.getInt("schedule.interval") seconds
 
   Log.info(s"worker monitor schedule { initial: ${initial}, interval: ${interval} }")
-  // sys.scheduler.schedule(initialDelay = initial, interval = interval, receiver = receiver, BroadcastRequest)
+  sys.scheduler.schedule(initialDelay = initial, interval = interval, receiver = receiver, BroadcastRequest)
 
   // http server
   val r = injector.getInstance(classOf[RootEndpoints])
