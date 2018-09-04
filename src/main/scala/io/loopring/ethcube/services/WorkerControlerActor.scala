@@ -19,7 +19,7 @@ class WorkerControlerActor(broadcastRouter: Router, var roundRobinRouter: Router
   def receive: Actor.Receive = {
     case s: JsonRpcRequest ⇒
       if (roundRobinRouter.routees.isEmpty)
-        sender ! JsonRpcResponse(id = None, jsonrpc = "2.0", error = Some(JsonRpcError(500, "has no routee")))
+        sender ! JsonRpcResponse(id = None, jsonrpc = "2.0", error = Some(JsonRpcError(600, "has no routee")))
       else roundRobinRouter.route(s, sender)
 
     case BroadcastRequest ⇒ broadcastRouter.route(Broadcast(BroadcastRequest), sender)
