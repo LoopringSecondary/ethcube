@@ -1,5 +1,6 @@
 package io.loopring.ethcube.model
 
+// json rpc
 case class JsonRpcRequest(id: Int, jsonrpc: String = "2.0", method: String, params: Any)
 
 case class JsonRpcError(code: Int, message: String)

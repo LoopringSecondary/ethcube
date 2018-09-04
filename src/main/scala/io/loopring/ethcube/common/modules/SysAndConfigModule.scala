@@ -6,9 +6,7 @@ import com.typesafe.config.{ Config, ConfigFactory }
 import com.google.inject.{ Provides, Singleton }
 import akka.actor.ActorSystem
 import java.io.File
-import java.net.URLClassLoader
 import scala.io.Source
-import com.google.common.io.Files
 import java.io.PrintWriter
 
 class SysAndConfigModule(args: Array[String]) extends AbstractModule with ScalaModule {
@@ -28,12 +26,12 @@ class SysAndConfigModule(args: Array[String]) extends AbstractModule with ScalaM
   def provideConfig: Config = {
     val path = ConfigFactory.load.getString(env)
     println("porject loading file => " + path)
+    // docker 复制文件到 /opt/docker/conf
     checkDockerEnv
     ConfigFactory parseFile (new File(path)) resolve
-
   }
 
-  private[SysAndConfigModule] def checkDockerEnv(): Unit = {
+  private[modules] def checkDockerEnv(): Unit = {
     if (env == "docker") {
 
       val docerFile = "docker.conf"
@@ -43,7 +41,7 @@ class SysAndConfigModule(args: Array[String]) extends AbstractModule with ScalaM
     }
   }
 
-  private[SysAndConfigModule] def copy(fileName: String): Unit = {
+  private[modules] def copy(fileName: String): Unit = {
     val loader = classOf[SysAndConfigModule].getClassLoader
     if (loader != null) {
       val is = loader.getResourceAsStream(fileName)

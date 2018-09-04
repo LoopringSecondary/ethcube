@@ -19,6 +19,7 @@ class RootEndpoints @Inject() (@Named("WorkerControlerActor") actor: ActorRef) e
   def apply(): Route = {
     handleExceptions(myExceptionHandler) {
       pathEndOrSingleSlash {
+        // json rpc
         entity(as[JsonRpcRequest]) { req ⇒
           onSuccess(handleClientRequest(req)) { complete(_) }
         }

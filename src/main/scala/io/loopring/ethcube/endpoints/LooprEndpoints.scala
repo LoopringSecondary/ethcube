@@ -26,8 +26,10 @@ class LooprEndpoints @Inject() (sys: ActorSystem, mat: ActorMaterializer, @Named
 
   override def apply(): Route = {
     handleExceptions(myExceptionHandler) {
+      // 这里暂时固定, 可以修改为配置化的
       pathPrefix("loopr") {
         pathEndOrSingleSlash {
+          // 数组模式
           entity(as[Seq[JsonRpcRequest]]) { reqs ⇒
             onSuccess(handleClientRequestSeq(reqs)) { complete(_) }
           }
@@ -36,6 +38,7 @@ class LooprEndpoints @Inject() (sys: ActorSystem, mat: ActorMaterializer, @Named
     }
   }
 
+  // 多请求
   def handleClientRequestSeq(reqs: Seq[JsonRpcRequest]): Future[Seq[JsonRpcResponse]] =
     Future.sequence(reqs.map(handleClientRequest))
 

@@ -19,7 +19,7 @@ import io.loopring.ethcube.client.geth.GethIpcEtherClientImpl
 import akka.http.scaladsl.server.Route
 import javax.inject.Inject
 import akka.routing.ActorSelectionRoutee
-import io.loopring.ethcube.services.WorkerControlerActor
+import io.loopring.ethcube.services.WorkerControllerActor
 
 trait ServicesModule extends BaseModule { self ⇒
 
@@ -29,17 +29,12 @@ trait ServicesModule extends BaseModule { self ⇒
   @Provides @Singleton
   def provideActorMaterializer(@Inject() sys: ActorSystem): ActorMaterializer = ActorMaterializer()(sys)
 
-  //  @Provides @Singleton @Named("WorkerRoundRobinActor")
-  //  def provideWorkerRoundRobinActor(@Inject() sys: ActorSystem, @Named("RoundRobinRouter") router: Router) = {
-  //    sys.actorOf(Props(classOf[WorkerRoundRobinActor], router), "WorkerRoundRobinActor")
-  //  }
-
-  @Provides @Singleton @Named("WorkerControlerActor")
-  def provideWorkerMonitorActor(
+  @Provides @Singleton @Named("WorkerControllerActor")
+  def provideWorkerControllerActor(
     @Inject() sys: ActorSystem,
     @Named("BroadcastRouter") router1: Router,
     @Named("RoundRobinRouter") router2: Router) = {
-    sys.actorOf(Props(classOf[WorkerControlerActor], router1, router2), "WorkerMonitorActor")
+    sys.actorOf(Props(classOf[WorkerControllerActor], router1, router2), "WorkerMonitorActor")
   }
 
   @Provides @Singleton @Named("RoundRobinRouter")

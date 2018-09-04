@@ -1,20 +1,21 @@
 package io.loopring.ethcube
 
-import io.loopring.ethcube.common._
-import com.google.inject.Guice
-import io.loopring.ethcube.common.modules.SysAndConfigModule
-import io.loopring.ethcube.modules.ServicesModule
-import com.typesafe.config.Config
-import akka.actor.ActorSystem
-import akka.stream.ActorMaterializer
-import akka.http.scaladsl.Http
-import io.loopring.ethcube.endpoints.RootEndpoints
 import scala.concurrent.duration._
-import io.loopring.ethcube.model.BroadcastRequest
+
 import org.slf4j.LoggerFactory
-import akka.http.scaladsl.server.Route
-import io.loopring.ethcube.endpoints.LooprEndpoints
+
+import com.google.inject.Guice
+import com.typesafe.config.Config
+
+import akka.actor.ActorSystem
+import akka.http.scaladsl.Http
 import akka.http.scaladsl.server.Directives._
+import akka.stream.ActorMaterializer
+import io.loopring.ethcube.common.ActorInjector
+import io.loopring.ethcube.common.modules.SysAndConfigModule
+import io.loopring.ethcube.endpoints._
+import io.loopring.ethcube.model.BroadcastRequest
+import io.loopring.ethcube.modules.ServicesModule
 
 /**
  * entry main function
@@ -32,7 +33,7 @@ object Main extends App {
   import sys.dispatcher
 
   // monitor actor
-  val receiver = injector.getActor("WorkerControlerActor")
+  val receiver = injector.getActor("WorkerControllerActor")
   val initial = config.getInt("schedule.initial") seconds
   val interval = config.getInt("schedule.interval") seconds
 

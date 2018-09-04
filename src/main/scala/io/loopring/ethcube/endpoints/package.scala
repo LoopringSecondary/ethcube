@@ -12,6 +12,7 @@ package object endpoints {
 
   lazy val Log = LoggerFactory.getLogger(getClass)
 
+  // 异常处理
   def myExceptionHandler: ExceptionHandler =
     ExceptionHandler {
       case e: AskTimeoutException ⇒
