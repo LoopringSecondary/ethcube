@@ -48,9 +48,7 @@ object Main extends App {
 
   Http().bindAndHandle(r() ~ l(), host, port)
 
-  // TODO(Toan)这里还需要添加 websocket
-
-  println(logo)
+  Log.info("\n" + logo)
 
   lazy val logo = """
       ________  __    ______      __       
