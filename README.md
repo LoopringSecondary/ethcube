@@ -5,42 +5,23 @@
 
 # 设计
 
-使用 Akka Http 对外提供服务(Root 节点), 内部采用Akka Cluster做分布式服务处理, worker 节点负责连接Geth/Parity客户端获取以太坊数据, 直接返回给调用者。 
+使用Akka的路由的功能对不同客户端采用单独的actor控制, 使用环形路由对节点做环形访问请求, 再使用广播路由对没给客户端actor检查区块高度, 便于环形路由控制客户端actor的访问控制。
 
 <img src="./docs/ethcube.png"/>
 
-## Root节点
+## 环形路由
 
-Root 节点使用Akka Http对外提供Restful接口, 这里不做数据缓存, 直接利用Akka Cluster技术向worker节点发送请求, 得到数据之后直接返回。
+对外提供接口可以访问到环形路由, 有路由内部自动取下一个操作。
 
-## Worker节点
+## 广播路由
 
-Worker 节点对外是以Actor调用, 参数是以protobuf定义, Worker 节点可以多部署, 由Root节点随机访问, 做均衡请求处理。
+程序定时向路由中的每个节点发送消息, 验证区块高度, 不合适的节点不会加入到环路由中。
 
 
 # 运行
 
 以下命令都是在工程路径下面执行, 运行项目可以使用环境变量或是命令行参数
 
-以下两种方式结果一样, 自动加载 application.conf 和 conf/test.conf
-
-如果不使用参数, 自动加载 application.conf 和 conf/dev.conf
-
-
-例如 1: 
-
-```
-export env="test"
-
-sbt root/run
-```
-
-例如 2: 
-
-
-```
-sbt "root/run test"
-```
 
 ## 编译
 
@@ -54,48 +35,50 @@ sbt clean compile
 sbt clean compile eclipse
 ```
 
-## Root 运行
+## 运行
 
 ```
-sbt root/run
+sbt run
 ```
 
-## Worker 运行
-
-```
-sbt worker/run
-```
-
-## docker 运行
-
-### root docker
+## 指定配置文件
 
 ```
 
-sbt root/docker:publishLocal
+# 下面的命令会自动读取 $APP_HOME/src/main/resources/test.conf
 
-docker images
-
-docker run -it -p 8080:8080 root:0.1.0-SNAPSHOT / docker run -d -p 8080:8080 --name root root:0.1.0-SNAPSHOT
+sbt -Denv=test run
 
 ```
 
-### worker docker (这里还有点问题, 暂时不能这么用)
+## docker 命令
+
+### 打包
+
+1. 这里只配置了发布到本地的参数, 没有配置远端repository
+2. 必须使用参数 -Denv=docker 程序内部已经配置好了关于 "env=docker" 相关属性
+3. 
 
 ```
+sbt -Denv=docker docker:publishLocal
+```
 
-sbt worker/docker:publishLocal
+### 运行
 
-docker images
-
-docker run -it -p 20552:20552 worker:0.1.0-SNAPSHOT / docker run -d -p 20552:20552 --name worker worker:0.1.0-SNAPSHOT
+1. 程序对外端口是 9000, docker 需要映射一下
+2. logs 是程序日志文件夹, 自动写入 console.log
+3. conf 是配置文件夹, 程序自动检测 docker.conf, 没有会自动创建一个, 也可以自动一个docker.conf
 
 ```
+docker run -d --name ethcube -v ~/logs:/opt/docker/logs -v ~/conf:/opt/docker/conf -p 9000:9000 CONTAINER_ID
+```
+
 
 
 # 功能
 
-1. 提供以太坊API
-2. 客户端管理(状态, 延时, 同步等)
+1. 提供以太坊jsonrpc API 查询功能
+2. 扩充了jsonrpc的多请求功能, 使用数组jsonrpc post 到 /loor 会自动转发所有请求, 并收集全部结果再返回
+3. 使用广播功能获取每个客户端同步情况, 再可控制环形路由的routees, 如果无路由可用返回 JsonRpcError(600, "has no routee")
 
 

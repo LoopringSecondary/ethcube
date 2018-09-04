@@ -39,9 +39,4 @@ object Dependencies {
 		"com.github.jnr" % "jnr-unixsocket" % "0.19"
 	)
 
-
-	lazy val scalapbDependency = Seq(
-		"com.thesamet.scalapb" %% "scalapb-runtime" % scalapb.compiler.Version.scalapbVersion,
-    "com.thesamet.scalapb" %% "scalapb-runtime" % scalapb.compiler.Version.scalapbVersion % "protobuf",
-	)
 }	
