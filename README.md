@@ -56,8 +56,7 @@ sbt -Denv=test run
 ### 打包
 
 1. 这里只配置了发布到本地的参数, 没有配置远端repository
-2. 必须使用参数 -Denv=docker 程序内部已经配置好了关于 "env=docker" 相关属性
-3. 
+2. 必须使用参数 -Denv=docker 程序内部已经配置好了关于 "env=docker" 相关属性 
 
 ```
 sbt -Denv=docker docker:publishLocal
