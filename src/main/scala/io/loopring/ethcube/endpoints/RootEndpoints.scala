@@ -15,7 +15,7 @@ import io.loopring.ethcube.model.JsonRpcResponse
 
 @Provides @Singleton
 class RootEndpoints @Inject() (
-  @Named("WorkerControlerActor") actor: ActorRef)
+  @Named("WorkerControllerActor") actor: ActorRef)
   extends JsonSupport {
 
   def apply(): Route = {

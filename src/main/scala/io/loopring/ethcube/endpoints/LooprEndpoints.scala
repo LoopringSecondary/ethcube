@@ -21,11 +21,10 @@ import akka.stream.ActorMaterializer
 class LooprEndpoints @Inject() (
   sys: ActorSystem,
   mat: ActorMaterializer,
-  @Named("WorkerControlerActor") actor: ActorRef)
+  @Named("WorkerControllerActor") actor: ActorRef)
   extends RootEndpoints(actor) {
 
   import sys.dispatcher
-
   implicit val m = mat
 
   override def apply(): Route = {
