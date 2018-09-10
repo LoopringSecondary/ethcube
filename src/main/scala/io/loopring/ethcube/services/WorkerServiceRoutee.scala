@@ -58,11 +58,11 @@ class WorkerServiceRoutee(client: ActorRef) extends Actor {
               Log.debug(s"WorkerRoutee[${label}] get eth syning block { currentBlock: ${currentBlock}, highestBlock:${highestBlock} }")
 
               if (currentBlock + blockCap < highestBlock) {
-                Log.info(s"WorkerRoutee[${label}] check client failed to has the highest block, { currentBlock: ${currentBlock}, highestBlock:${highestBlock} }")
+                Log.info(s"WorkerRoutee[${label}] check client failed, not has the highest block, { currentBlock: ${currentBlock}, highestBlock:${highestBlock} }")
                 // 当前的高度不够高的话 WorkerRoutee 需要移出
                 sendFailed
               } else {
-                Log.info(s"WorkerRoutee[${label}] check successfuled, { currentBlock: ${currentBlock}, highestBlock:${highestBlock} }")
+                Log.info(s"WorkerRoutee[${label}] check block successfuled, { currentBlock: ${currentBlock}, highestBlock:${highestBlock} }")
                 sendSuccessed
               }
             }

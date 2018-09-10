@@ -29,7 +29,7 @@ object Main extends App {
   implicit val mat = injector.getInstance(classOf[ActorMaterializer])
 
   // monitor actor
-  val receiver = injector.getActor("WorkerControllerActor")
+  // val receiver = injector.getActor("WorkerControllerActor")
 
   // http server
   val r = injector.getInstance(classOf[RootEndpoints])
