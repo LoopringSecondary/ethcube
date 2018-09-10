@@ -1,18 +1,18 @@
-package io.loopring.ethcube.endpoints
+package org.loopring.ethcube.endpoints
 
 import akka.actor.ActorRef
-import io.loopring.ethcube.common.json.JsonSupport
+import org.loopring.ethcube.common.json.JsonSupport
 import javax.inject.{ Inject, Named }
 import com.google.inject.{ Provides, Singleton }
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.server.Directives._
 import scala.concurrent.Future
-import io.loopring.ethcube.model.JsonRpcRequest
+import org.loopring.ethcube.model.JsonRpcRequest
 import scala.util.Random
 import akka.pattern.ask
 import akka.util.Timeout
 import scala.concurrent.duration._
-import io.loopring.ethcube.model.JsonRpcResponse
+import org.loopring.ethcube.model.JsonRpcResponse
 import akka.actor.ActorSystem
 import akka.http.scaladsl.model.HttpEntity
 import akka.stream.ActorMaterializer

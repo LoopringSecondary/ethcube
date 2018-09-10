@@ -1,4 +1,4 @@
-package io.loopring.ethcube.model
+package org.loopring.ethcube.model
 
 // json rpc
 case class JsonRpcRequest(id: Int, jsonrpc: String = "2.0", method: String, params: Any)

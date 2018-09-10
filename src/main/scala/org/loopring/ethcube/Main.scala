@@ -1,4 +1,4 @@
-package io.loopring.ethcube
+package org.loopring.ethcube
 
 import scala.concurrent.duration._
 
@@ -11,11 +11,11 @@ import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.server.Directives._
 import akka.stream.ActorMaterializer
-import io.loopring.ethcube.common.ActorInjector
-import io.loopring.ethcube.common.modules.SysAndConfigModule
-import io.loopring.ethcube.endpoints._
-import io.loopring.ethcube.model.BroadcastRequest
-import io.loopring.ethcube.modules.ServicesModule
+import org.loopring.ethcube.common.ActorInjector
+import org.loopring.ethcube.common.modules.SysAndConfigModule
+import org.loopring.ethcube.endpoints._
+import org.loopring.ethcube.model.BroadcastRequest
+import org.loopring.ethcube.modules.ServicesModule
 
 /**
  * entry main function

@@ -1,10 +1,10 @@
-package io.loopring.ethcube.services
+package org.loopring.ethcube.services
 
 import akka.actor.{ Actor, ActorRef }
 import org.slf4j.LoggerFactory
-import io.loopring.ethcube.model.{ BroadcastRequest, BroadcastResponse }
+import org.loopring.ethcube.model.{ BroadcastRequest, BroadcastResponse }
 import akka.routing._
-import io.loopring.ethcube.model.{ JsonRpcRequest, JsonRpcResponse, JsonRpcError }
+import org.loopring.ethcube.model.{ JsonRpcRequest, JsonRpcResponse, JsonRpcError }
 
 class WorkerControllerActor(broadcastRouter: Router, var roundRobinRouter: Router) extends Actor {
 

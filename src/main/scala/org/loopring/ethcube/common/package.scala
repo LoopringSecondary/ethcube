@@ -1,4 +1,4 @@
-package io.loopring.ethcube
+package org.loopring.ethcube
 
 import akka.actor.ActorRef
 import com.google.inject.name.Names

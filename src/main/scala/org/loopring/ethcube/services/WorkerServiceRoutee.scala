@@ -1,8 +1,8 @@
-package io.loopring.ethcube.services
+package org.loopring.ethcube.services
 
 import akka.actor.{ Actor, ActorRef }
 import javax.inject.{ Inject, Named }
-import io.loopring.ethcube.model._
+import org.loopring.ethcube.model._
 import akka.pattern.ask
 import akka.pattern.pipe
 import akka.util.Timeout

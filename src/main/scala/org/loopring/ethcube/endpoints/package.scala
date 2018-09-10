@@ -1,4 +1,4 @@
-package io.loopring.ethcube
+package org.loopring.ethcube
 
 import akka.http.scaladsl.server.ExceptionHandler
 import akka.pattern.AskTimeoutException

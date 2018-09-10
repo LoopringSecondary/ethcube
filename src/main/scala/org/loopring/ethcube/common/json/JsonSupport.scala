@@ -1,4 +1,4 @@
-package io.loopring.ethcube.common.json
+package org.loopring.ethcube.common.json
 
 import org.json4s._
 import org.json4s.native.Serialization

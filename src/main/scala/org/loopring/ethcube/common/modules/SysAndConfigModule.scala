@@ -1,4 +1,4 @@
-package io.loopring.ethcube.common.modules
+package org.loopring.ethcube.common.modules
 
 import com.google.inject.AbstractModule
 import net.codingwell.scalaguice.ScalaModule

@@ -1,4 +1,4 @@
-package io.loopring.ethcube.model
+package org.loopring.ethcube.model
 
 import akka.actor.ActorRef
 

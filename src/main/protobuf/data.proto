@@ -1,0 +1,48 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "org.loopring.ethcube.proto";
+package org.loopring.ethcube.proto;
+
+import "google/protobuf/any.proto";
+
+
+message EthereumProxySettings {
+    message Node {
+        string host = 1;
+        int32 port = 2;
+    }
+    int32 pool_size = 1;
+    int32 check_interval_seconds = 2;
+    repeated Node nodes = 3;
+}
+
+message JsonRpcReq {
+    int32 id = 1;
+    string jsonrpc = 2;
+    string method = 3;
+    google.protobuf.Any params = 4;
+}
+
+message JsonRpcErr {
+    int32 code = 1;
+    string message = 2;
+}
+
+message JsonRpcRes {
+    google.protobuf.Any id = 1;
+    string jsonrpc = 2;
+    google.protobuf.Any result = 3;
+    JsonRpcErr error = 4;
+}
+
+// case class JsonRpcRequest(id: Int, jsonrpc: String = "2.0",
+//  method: String, params: Any)
+
+// case class JsonRpcError(code: Int, message: String)
+
+// case class JsonRpcResponse(
+// id: Option[Any] = None,
+//  jsonrpc: String, 
+//  result: Option[Any] = None,
+//   error: Option[JsonRpcError] = None)

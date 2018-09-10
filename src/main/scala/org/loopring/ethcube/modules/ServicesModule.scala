@@ -1,25 +1,25 @@
-package io.loopring.ethcube.modules
+package org.loopring.ethcube.modules
 
-import io.loopring.ethcube.common.modules.BaseModule
+import org.loopring.ethcube.common.modules.BaseModule
 import com.google.inject.{ Provides, Singleton }
 import akka.stream.ActorMaterializer
 import akka.actor.ActorSystem
 import akka.actor.ActorRef
 import akka.actor.Props
 import javax.inject.Named
-import io.loopring.ethcube.services.WorkerServiceRoutee
+import org.loopring.ethcube.services.WorkerServiceRoutee
 import akka.routing.Router
 import akka.routing.RoundRobinRoutingLogic
 import akka.routing.ActorRefRoutee
 import scala.collection.immutable
 import akka.routing.BroadcastRoutingLogic
 import com.typesafe.config.Config
-import io.loopring.ethcube.client.geth.GethHttpEtherClientImpl
-import io.loopring.ethcube.client.geth.GethIpcEtherClientImpl
+import org.loopring.ethcube.client.geth.GethHttpEtherClientImpl
+import org.loopring.ethcube.client.geth.GethIpcEtherClientImpl
 import akka.http.scaladsl.server.Route
 import javax.inject.Inject
 import akka.routing.ActorSelectionRoutee
-import io.loopring.ethcube.services.WorkerControllerActor
+import org.loopring.ethcube.services.WorkerControllerActor
 
 trait ServicesModule extends BaseModule { self ⇒
 
