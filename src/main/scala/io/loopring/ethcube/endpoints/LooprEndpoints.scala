@@ -1,7 +1,7 @@
 package io.loopring.ethcube.endpoints
 
 import akka.actor.ActorRef
-import io.loopring.ethcube.common.json.JsonSupport
+import io.loopring.ethcube.common.JsonSupport
 import javax.inject.{ Inject, Named }
 import com.google.inject.{ Provides, Singleton }
 import akka.http.scaladsl.server.Route
@@ -18,7 +18,11 @@ import akka.http.scaladsl.model.HttpEntity
 import akka.stream.ActorMaterializer
 
 @Provides @Singleton
-class LooprEndpoints @Inject() (sys: ActorSystem, mat: ActorMaterializer, @Named("WorkerControlerActor") actor: ActorRef) extends RootEndpoints(actor) {
+class LooprEndpoints @Inject() (
+  sys: ActorSystem,
+  mat: ActorMaterializer,
+  @Named("WorkerControlerActor") actor: ActorRef)
+  extends RootEndpoints(actor) {
 
   import sys.dispatcher
 

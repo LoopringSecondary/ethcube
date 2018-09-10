@@ -1,10 +1,9 @@
-package io.loopring.ethcube.client.geth
+package io.loopring.ethcube.client
 
-import io.loopring.ethcube.client.EtherClient
 import akka.actor.Actor
 import scala.concurrent.Future
 import javax.inject.Inject
-import io.loopring.ethcube.modules.EtherClientConfig
+import io.loopring.ethcube.EtherClientConfig
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
 import org.slf4j.LoggerFactory
@@ -32,10 +31,14 @@ import io.loopring.ethcube.model.BroadcastResponse
 import akka.http.scaladsl.marshalling.Marshal
 import akka.http.scaladsl.model.RequestEntity
 import akka.http.scaladsl.unmarshalling.Unmarshal
-import io.loopring.ethcube.common.json.JsonSupport
+import io.loopring.ethcube.common.JsonSupport
 import io.loopring.ethcube.model.JsonRpcResponse
 
-class GethHttpEtherClientImpl(sys: ActorSystem, mat: ActorMaterializer, val config: EtherClientConfig) extends EtherClient with Actor with JsonSupport {
+class GethHttpEtherClientImpl(
+  sys: ActorSystem,
+  mat: ActorMaterializer,
+  val config: EtherClientConfig)
+  extends Actor with JsonSupport {
 
   lazy val Log = LoggerFactory.getLogger(getClass)
   implicit val materilizer = mat

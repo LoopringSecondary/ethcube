@@ -9,7 +9,8 @@ import java.io.File
 import scala.io.Source
 import java.io.PrintWriter
 
-class SysAndConfigModule(args: Array[String]) extends AbstractModule with ScalaModule {
+class SysAndConfigModule(args: Array[String])
+  extends AbstractModule with ScalaModule {
 
   lazy val dockerConfigPath = "/opt/docker/conf"
 
@@ -54,6 +55,6 @@ class SysAndConfigModule(args: Array[String]) extends AbstractModule with ScalaM
   }
 
   @Provides @Singleton
-  def provideActorSystem: ActorSystem = ActorSystem("EthereumCubeSystem")
+  def provideActorSystem: ActorSystem = ActorSystem("Ethcube")
 
 }
