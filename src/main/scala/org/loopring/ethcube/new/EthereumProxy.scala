@@ -6,7 +6,7 @@ import akka.stream.ActorMaterializer
 import org.loopring.ethcube.proto.data._
 import scala.collection.immutable.IndexedSeq
 
-class EthereumProxy(settings: EthereumProxySettings)(implicit val mat: ActorMaterializer)
+class EthereumProxy(settings: EthereumProxySettings)(implicit val materilizer: ActorMaterializer)
   extends Actor with ActorLogging {
 
   private val connectors: Seq[ActorRefRoutee] = settings.nodes.map {

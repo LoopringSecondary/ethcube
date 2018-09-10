@@ -1,10 +1,10 @@
-package io.loopring.ethcube.client.geth
+package org.loopring.ethcube.client.geth
 
-import io.loopring.ethcube.client.EtherClient
+import org.loopring.ethcube.client.EtherClient
 import akka.actor.Actor
 import scala.concurrent.Future
 import javax.inject.Inject
-import io.loopring.ethcube.modules.EtherClientConfig
+import org.loopring.ethcube.modules.EtherClientConfig
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
 import org.slf4j.LoggerFactory
@@ -22,18 +22,18 @@ import scala.util.Success
 import scala.util.Failure
 import akka.stream.scaladsl.Keep
 import akka.stream.QueueOfferResult
-import io.loopring.ethcube.model.JsonRpcRequest
+import org.loopring.ethcube.model.JsonRpcRequest
 import akka.http.scaladsl.model.HttpMethods
 import akka.http.scaladsl.model.ContentTypes
 import akka.util.ByteString
 import akka.http.scaladsl.model.HttpEntity
 import akka.pattern.pipe
-import io.loopring.ethcube.model.BroadcastResponse
+import org.loopring.ethcube.model.BroadcastResponse
 import akka.http.scaladsl.marshalling.Marshal
 import akka.http.scaladsl.model.RequestEntity
 import akka.http.scaladsl.unmarshalling.Unmarshal
-import io.loopring.ethcube.common.json.JsonSupport
-import io.loopring.ethcube.model.JsonRpcResponse
+import org.loopring.ethcube.common.json.JsonSupport
+import org.loopring.ethcube.model.JsonRpcResponse
 
 class GethHttpEtherClientImpl(sys: ActorSystem, mat: ActorMaterializer, val config: EtherClientConfig) extends EtherClient with Actor with JsonSupport {
 
