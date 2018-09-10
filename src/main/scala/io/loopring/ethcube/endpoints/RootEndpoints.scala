@@ -2,7 +2,7 @@ package io.loopring.ethcube.endpoints
 
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.server.Directives._
-import io.loopring.ethcube.common.json.JsonSupport
+import io.loopring.ethcube.common.JsonSupport
 import com.google.inject.{ Provides, Singleton }
 import javax.inject.{ Inject, Named }
 import akka.actor.ActorRef
@@ -14,7 +14,9 @@ import io.loopring.ethcube.model.JsonRpcRequest
 import io.loopring.ethcube.model.JsonRpcResponse
 
 @Provides @Singleton
-class RootEndpoints @Inject() (@Named("WorkerControlerActor") actor: ActorRef) extends JsonSupport {
+class RootEndpoints @Inject() (
+  @Named("WorkerControlerActor") actor: ActorRef)
+  extends JsonSupport {
 
   def apply(): Route = {
     handleExceptions(myExceptionHandler) {

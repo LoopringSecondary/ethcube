@@ -1,6 +1,5 @@
-package io.loopring.ethcube.modules
+package io.loopring.ethcube
 
-import io.loopring.ethcube.common.modules.BaseModule
 import com.google.inject.{ Provides, Singleton }
 import akka.stream.ActorMaterializer
 import akka.actor.ActorSystem
@@ -14,22 +13,26 @@ import akka.routing.ActorRefRoutee
 import scala.collection.immutable
 import akka.routing.BroadcastRoutingLogic
 import com.typesafe.config.Config
-import io.loopring.ethcube.client.geth.GethHttpEtherClientImpl
-import io.loopring.ethcube.client.geth.GethIpcEtherClientImpl
+import io.loopring.ethcube.client.GethHttpEtherClientImpl
+import io.loopring.ethcube.client.GethIpcEtherClientImpl
 import akka.http.scaladsl.server.Route
 import javax.inject.Inject
 import akka.routing.ActorSelectionRoutee
 import io.loopring.ethcube.services.WorkerControllerActor
 
-trait ServicesModule extends BaseModule { self ⇒
+import com.google.inject.AbstractModule
+import net.codingwell.scalaguice.ScalaModule
 
-  override def configure: Unit = {
-  }
+object ServicesModule extends AbstractModule with ScalaModule {
 
-  @Provides @Singleton
-  def provideActorMaterializer(@Inject() sys: ActorSystem): ActorMaterializer = ActorMaterializer()(sys)
+  @Provides
+  @Singleton
+  def provideActorMaterializer(
+    @Inject() sys: ActorSystem): ActorMaterializer = ActorMaterializer()(sys)
 
-  @Provides @Singleton @Named("WorkerControllerActor")
+  @Provides
+  @Singleton
+  @Named("WorkerControllerActor")
   def provideWorkerControllerActor(
     @Inject() sys: ActorSystem,
     @Named("BroadcastRouter") router1: Router,
@@ -37,25 +40,40 @@ trait ServicesModule extends BaseModule { self ⇒
     sys.actorOf(Props(classOf[WorkerControllerActor], router1, router2), "WorkerMonitorActor")
   }
 
-  @Provides @Singleton @Named("RoundRobinRouter")
-  def provideRoundRobinRouter(@Inject()@Named("WorkerRoutees") routees: Seq[ActorRefRoutee]): Router = {
+  @Provides
+  @Singleton
+  @Named("RoundRobinRouter")
+  def provideRoundRobinRouter(
+    @Inject()@Named("WorkerRoutees") routees: Seq[ActorRefRoutee]): Router = {
     Router(RoundRobinRoutingLogic(), immutable.IndexedSeq(routees: _*))
   }
 
-  @Provides @Singleton @Named("BroadcastRouter")
-  def provideBroadcastRouter(@Inject()@Named("WorkerRoutees") routees: Seq[ActorRefRoutee]): Router = {
+  @Provides
+  @Singleton
+  @Named("BroadcastRouter")
+  def provideBroadcastRouter(
+    @Inject()@Named("WorkerRoutees") routees: Seq[ActorRefRoutee]): Router = {
     Router(BroadcastRoutingLogic(), immutable.IndexedSeq(routees: _*))
   }
 
-  @Provides @Singleton @Named("WorkerRoutees")
-  def provideWorkerRoutees(@Inject() sys: ActorSystem, @Named("EtherClientActorRefs") actors: Seq[ActorRef]): Seq[ActorRefRoutee] = {
+  @Provides
+  @Singleton
+  @Named("WorkerRoutees")
+  def provideWorkerRoutees(
+    @Inject() sys: ActorSystem,
+    @Named("EtherClientActorRefs") actors: Seq[ActorRef]): Seq[ActorRefRoutee] = {
     actors.map { ac ⇒
       sys.actorOf(Props(classOf[WorkerServiceRoutee], ac), s"Worker_${ac.path.name}")
     }.map(ActorRefRoutee)
   }
 
-  @Provides @Singleton @Named("EtherClientActorRefs")
-  def provideEtherClientActorRefs(@Inject() sys: ActorSystem, mat: ActorMaterializer, config: Config): Seq[ActorRef] = {
+  @Provides
+  @Singleton
+  @Named("EtherClientActorRefs")
+  def provideEtherClientActorRefs(
+    @Inject() sys: ActorSystem,
+    mat: ActorMaterializer,
+    config: Config): Seq[ActorRef] = {
 
     import scala.collection.JavaConverters._
 
@@ -75,9 +93,5 @@ trait ServicesModule extends BaseModule { self ⇒
 
     config.getObjectList("clients").asScala.map(_.toConfig).map(provideClientConfig)
   }
-
 }
 
-object ServicesModule extends ServicesModule
-
-case class EtherClientConfig(label: String, host: String, port: Int, ipcPath: String)

@@ -15,7 +15,6 @@ import io.loopring.ethcube.common.ActorInjector
 import io.loopring.ethcube.common.modules.SysAndConfigModule
 import io.loopring.ethcube.endpoints._
 import io.loopring.ethcube.model.BroadcastRequest
-import io.loopring.ethcube.modules.ServicesModule
 
 /**
  * entry main function
@@ -52,8 +51,8 @@ object Main extends App {
   Log.info("\n" + logo)
 
   lazy val logo = """
-      ________  __    ______      __       
-     / ____/ /_/ /_  / ____/_  __/ /_  ___ 
+      ________  __    ______      __
+     / ____/ /_/ /_  / ____/_  __/ /_  ___
     / __/ / __/ __ \/ /   / / / / __ \/ _ \
    / /___/ /_/ / / / /___/ /_/ / /_/ /  __/
   /_____/\__/_/ /_/\____/\__,_/_.___/\___/  """ + s"http://${host}:${port}"
