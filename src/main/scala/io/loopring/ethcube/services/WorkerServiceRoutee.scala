@@ -12,6 +12,8 @@ import akka.actor.Identify
 import scala.concurrent.Future
 import org.json4s.native.JsonMethods._
 import org.slf4j.LoggerFactory
+import scala.util.Success
+import scala.util.Failure
 
 class WorkerServiceRoutee(client: ActorRef) extends Actor {
 
@@ -70,6 +72,11 @@ class WorkerServiceRoutee(client: ActorRef) extends Actor {
               Log.error(s"syning parse json response error: ${resp}", ex)
           }
         }
+      } onComplete {
+        case Success(s) ⇒ Log.info("Broadcast Successed!!!")
+        case Failure(f) ⇒
+          Log.error(s"Broadcast Failed: ${f.getMessage}", f)
+          sendFailed
       }
   }
 
