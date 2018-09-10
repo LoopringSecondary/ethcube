@@ -35,9 +35,12 @@ object ServicesModule extends AbstractModule with ScalaModule {
   @Named("WorkerControllerActor")
   def provideWorkerControllerActor(
     @Inject() sys: ActorSystem,
+    config: Config,
     @Named("BroadcastRouter") router1: Router,
     @Named("RoundRobinRouter") router2: Router) = {
-    sys.actorOf(Props(classOf[WorkerControllerActor], router1, router2), "WorkerMonitorActor")
+    val delay = config.getInt("schedule.delay")
+    val interval = config.getInt("schedule.interval")
+    sys.actorOf(Props(classOf[WorkerControllerActor], router1, router2, delay, interval), "WorkerMonitorActor")
   }
 
   @Provides
