@@ -18,11 +18,12 @@ object Main extends App {
   implicit val materializer = ActorMaterializer()
 
   val settings: EthereumProxySettings = {
+    val sub = config.getConfig("clients")
     EthereumProxySettings(
-      config.getInt("pool-size"),
-      config.getInt("check-interval-seconds"),
-      config.getDouble("healthy-threshold").toFloat,
-      config.getConfigList("nodes").asScala map {
+      sub.getInt("pool-size"),
+      sub.getInt("check-interval-seconds"),
+      sub.getDouble("healthy-threshold").toFloat,
+      sub.getConfigList("nodes").asScala map {
         c =>
           EthereumProxySettings.Node(
             c.getString("host"),
