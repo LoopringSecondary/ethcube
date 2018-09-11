@@ -1,7 +1,5 @@
 package io.loopring.ethcube
 
-import scala.concurrent.duration._
-
 import org.slf4j.LoggerFactory
 
 import com.google.inject.Guice
@@ -29,15 +27,9 @@ object Main extends App {
 
   implicit val sys = injector.getInstance(classOf[ActorSystem])
   implicit val mat = injector.getInstance(classOf[ActorMaterializer])
-  import sys.dispatcher
 
   // monitor actor
-  val receiver = injector.getActor("WorkerControllerActor")
-  val initial = config.getInt("schedule.initial") seconds
-  val interval = config.getInt("schedule.interval") seconds
-
-  Log.info(s"worker monitor schedule { initial: ${initial}, interval: ${interval} }")
-  sys.scheduler.schedule(initialDelay = initial, interval = interval, receiver = receiver, BroadcastRequest)
+  // val receiver = injector.getActor("WorkerControllerActor")
 
   // http server
   val r = injector.getInstance(classOf[RootEndpoints])

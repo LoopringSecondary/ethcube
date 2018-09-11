@@ -5,10 +5,21 @@ import org.slf4j.LoggerFactory
 import io.loopring.ethcube.model.{ BroadcastRequest, BroadcastResponse }
 import akka.routing._
 import io.loopring.ethcube.model.{ JsonRpcRequest, JsonRpcResponse, JsonRpcError }
+import scala.concurrent.duration._
 
-class WorkerControllerActor(broadcastRouter: Router, var roundRobinRouter: Router) extends Actor {
+class WorkerControllerActor(
+  broadcastRouter: Router,
+  var roundRobinRouter: Router,
+  delay: Int,
+  interval: Int) extends Actor {
 
   lazy val Log = LoggerFactory.getLogger(getClass)
+
+  import context.dispatcher
+
+  override def preStart(): Unit = {
+    context.system.scheduler.schedule(initialDelay = delay seconds, interval = interval seconds, receiver = self, BroadcastRequest)
+  }
 
   def receive: Actor.Receive = {
     // json rpc

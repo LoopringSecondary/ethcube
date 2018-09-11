@@ -22,6 +22,7 @@ import io.loopring.ethcube.services.WorkerControllerActor
 
 import com.google.inject.AbstractModule
 import net.codingwell.scalaguice.ScalaModule
+import akka.routing.RandomPool
 
 object ServicesModule extends AbstractModule with ScalaModule {
 
@@ -35,9 +36,12 @@ object ServicesModule extends AbstractModule with ScalaModule {
   @Named("WorkerControllerActor")
   def provideWorkerControllerActor(
     @Inject() sys: ActorSystem,
+    config: Config,
     @Named("BroadcastRouter") router1: Router,
     @Named("RoundRobinRouter") router2: Router) = {
-    sys.actorOf(Props(classOf[WorkerControllerActor], router1, router2), "WorkerMonitorActor")
+    val delay = config.getInt("schedule.delay")
+    val interval = config.getInt("schedule.interval")
+    sys.actorOf(Props(classOf[WorkerControllerActor], router1, router2, delay, interval), "WorkerMonitorActor")
   }
 
   @Provides
@@ -80,13 +84,16 @@ object ServicesModule extends AbstractModule with ScalaModule {
     def provideClientConfig: PartialFunction[Config, ActorRef] = {
       case cfg ⇒
         val label = cfg.getString("label")
+        val poolSize = cfg.getInt("pool_size")
         cfg.getString("ipc_or_http") match {
           case "ipc" ⇒
             val c = EtherClientConfig(label, "", -1, cfg.getString("ipcpath"))
-            sys.actorOf(Props(classOf[GethIpcEtherClientImpl], sys, mat, c), s"${label}")
+            val poolProps = RandomPool(poolSize).props(Props(classOf[GethIpcEtherClientImpl], sys, mat, c))
+            sys.actorOf(poolProps, s"${label}")
           case "http" ⇒
             val c = EtherClientConfig(label, cfg.getString("host"), cfg.getInt("port"), "")
-            sys.actorOf(Props(classOf[GethHttpEtherClientImpl], sys, mat, c), s"${label}")
+            val poolProps = RandomPool(poolSize).props(Props(classOf[GethHttpEtherClientImpl], sys, mat, c))
+            sys.actorOf(poolProps, s"${label}")
           case _ ⇒ throw new Exception("can not match geth ipc or http")
         }
     }
