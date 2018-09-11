@@ -25,7 +25,7 @@ import org.loopring.ethcube.proto.data._
 import scala.concurrent.duration._
 
 private class ConnectionManager(
-  topRouter: Router,
+  requestRouter: Router,
   connectorGroups: Seq[ActorRef],
   checkIntervalSeconds: Int,
   healthyThreshold: Float)
@@ -39,7 +39,7 @@ private class ConnectionManager(
     checkIntervalSeconds.seconds,
     checkIntervalSeconds.seconds,
     self,
-    CheckBlockHeight)
+    CheckBlockHeight())
 
   def receive: Receive = {
 
@@ -49,8 +49,13 @@ private class ConnectionManager(
           g =>
             for {
               resp <- (g ? m).mapTo[CheckBlockHeightResp].recover {
-                case _: TimeoutException => CheckBlockHeightResp(0)
-                case _: Throwable => CheckBlockHeightResp(-1)
+                case e: TimeoutException =>
+                  log.error(s"timeout on getting blockheight: $g: ${e.getMessage}")
+                  CheckBlockHeightResp(0)
+
+                case e: Throwable =>
+                  log.error(s"exception on getting blockheight: $g: ${e.getMessage}")
+                  CheckBlockHeightResp(-1)
               }
             } yield (g, resp.blockHeight)
         })
@@ -59,14 +64,29 @@ private class ConnectionManager(
         tier2: Seq[ActorRef] = resps.filter(highestBlock - _._2 < 2).map(_._1)
         tier3: Seq[ActorRef] = resps.filter(highestBlock - _._2 < 3).map(_._1)
 
-        goodGroups = if (tier1.size >= size * healthyThreshold) tier1
-        else if (tier2.size >= size * healthyThreshold) tier2
-        else tier3
+        goodGroups = {
+          if (tier1.size >= size * healthyThreshold) tier1
+          else if (tier2.size >= size * healthyThreshold) tier2
+          else if (tier3.size > 0) tier3
+          else resps.map(_._1)
+        }
 
         badGroups = connectorGroups.filter(goodGroups.contains)
       } yield {
-        goodGroups.foreach { g => topRouter.addRoutee(ActorRefRoutee(g)) }
-        badGroups.foreach { g => topRouter.removeRoutee(ActorRefRoutee(g)) }
+        goodGroups.foreach { g =>
+          try {
+            requestRouter.addRoutee(ActorRefRoutee(g))
+          } catch {
+            case _: Throwable =>
+          }
+        }
+        badGroups.foreach { g =>
+          try {
+            requestRouter.removeRoutee(ActorRefRoutee(g))
+          } catch {
+            case _: Throwable =>
+          }
+        }
 
         log.debug(s"${goodGroups.size} connectorGroup are still in good shape "
           + s"(blockheight: $highestBlock): ${resps.mkString("[", ", ", "]")}")

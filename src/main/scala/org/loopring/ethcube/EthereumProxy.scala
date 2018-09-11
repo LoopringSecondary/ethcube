@@ -39,13 +39,13 @@ class EthereumProxy(settings: EthereumProxySettings)(
         "connector_group")
   }
 
-  private val topRouter = new Router(
+  private val requestRouter = new Router(
     RoundRobinRoutingLogic(),
-    IndexedSeq(connectorGroups.map(ActorRefRoutee): _*))
+    IndexedSeq(connectorGroups.map(g => ActorRefRoutee(g)): _*))
 
   private val manager = context.actorOf(
     Props(new ConnectionManager(
-      topRouter,
+      requestRouter,
       connectorGroups,
       settings.checkIntervalSeconds,
       settings.healthyThreshold)),
@@ -53,13 +53,13 @@ class EthereumProxy(settings: EthereumProxySettings)(
 
   def receive: Receive = {
     case m: JsonRpcReq =>
-      if (topRouter.routees.isEmpty) {
+      if (requestRouter.routees.isEmpty) {
         sender ! JsonRpcRes(
           id = None,
           jsonrpc = "2.0",
-          error = Some(JsonRpcErr(600, "has no routee")))
+          error = Some(JsonRpcErr(600, "no routee")))
       } else {
-        topRouter.route(m, sender)
+        requestRouter.route(m, sender)
       }
   }
 }

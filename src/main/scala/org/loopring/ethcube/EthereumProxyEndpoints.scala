@@ -56,6 +56,11 @@ class EthereumProxyEndpoints(ethereumProxy: ActorRef)(implicit
   val log = Logging(system, this)
 
   def getRoutes(): Route = {
+    val exceptionHandler = ExceptionHandler {
+      case e: Throwable =>
+        log.error(e.getMessage)
+        complete(errorResponse(e.getMessage))
+    }
     handleExceptions(exceptionHandler)(route)
   }
 
@@ -78,25 +83,6 @@ class EthereumProxyEndpoints(ethereumProxy: ActorRef)(implicit
             }
           })
       })
-  }
-
-  private def exceptionHandler = ExceptionHandler {
-    case e: AskTimeoutException =>
-      log.error(s"timeout: ${e.getMessage}", e)
-      complete(errorResponse("akka ask timeout[5s]"))
-
-    case e: ArithmeticException =>
-      extractUri { uri =>
-        log.error(s"bad request from : ${uri}", e)
-        complete(errorResponse(s"bad request from : ${uri}"))
-      }
-
-    case e: StreamTcpException =>
-      log.error(s"stream exception : ${e.getMessage}", e)
-      complete(errorResponse(s"stream exception : ${e.getMessage}"))
-
-    case t: Throwable =>
-      complete(errorResponse(s"Unknown Exception : ${t.getMessage}"))
   }
 
   private def errorResponse(msg: String): HttpResponse = {
