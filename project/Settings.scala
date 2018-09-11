@@ -4,21 +4,20 @@ import Keys._
 import com.typesafe.sbt.SbtNativePackager._
 import com.typesafe.sbt.packager.Keys._
 import com.typesafe.sbt.packager.MappingsHelper._
-
-// import com.typesafe.sbt.SbtNativePackager.autoImport._
+import ohnosequences.sbt.GithubRelease.keys._
 
 object Settings {
-
-	lazy val basicSettings: Seq[Setting[_]] = Seq(
-    name := Globals.name,
+  lazy val basicSettings: Seq[Setting[_]] = Seq(
     organization := Globals.organization,
     version := Globals.version,
     scalaVersion := Globals.scalaVersion,
     autoScalaLibrary := false,
-    // resolvers += Resolver.bintrayRepo("hseeberger", "maven"),
-    // resolvers ++= Resolvers.repositories,
+    resolvers += "mvnrepository" at "http://mvnrepository.com/artifact/",
+    resolvers += "ethereumlibrepository" at "https://dl.bintray.com/ethereum/maven/",
+    resolvers += "JFrog" at "https://oss.jfrog.org/libs-release/",
+    resolvers += "bintray" at "https://dl.bintray.com/ethereum/maven/",
+    resolvers += Resolver.bintrayRepo("hseeberger", "maven"),
     javacOptions := Seq( //"-source", Globals.jvmVersion,
-    //"-target", Globals.jvmVersion
     ),
     scalacOptions := Seq(
       "-encoding", "utf8",
@@ -28,41 +27,12 @@ object Settings {
       "-Yresolve-term-conflict:package"),
     fork in Test := false,
     parallelExecution in Test := false,
-
     // publishArtifact in (Compile, packageSrc) := false,
     // publishArtifact in (Compile, packageDoc) := false,
-    shellPrompt in ThisBuild := { state => "sbt (%s)> ".format(Project.extract(state).currentProject.id) })
-
-
-
-  lazy val packageSettings: Seq[Setting[_]] = Seq(
-
-    mappings in (Compile, packageBin) ~= {
-      _.filterNot { case (file, _) => 
-        (file.getName.endsWith("conf") && file.getName != "application.conf" && file.getName != "docker.conf") }
-    },
-
-    mappings in Universal += {
-      val configFile = sys.props.getOrElse("env", default = "dev") + ".conf"
-      ((resourceDirectory in Compile).value / configFile) -> s"conf/${configFile}"
-    },
-
-    mappings in Universal += {
-      ((resourceDirectory in Compile).value / "logback.xml") -> "conf/logback.xml"
-    },
-
-    bashScriptExtraDefines ++= Seq("""addJava "-Xmx16G"""")
-
-  )
-
-  lazy val dockerSettings: Seq[Setting[_]] = Seq(
-
-    dockerExposedPorts := Seq(9000),
-    // 设置环境变量
-    dockerEnvVars := Map(
-      "env" -> sys.props.getOrElse("env", default = "docker")
-    )
-    
-  )
-
+    organizationName := "Loopring Foundation",
+    startYear := Some(2018),
+    licenses += ("Apache-2.0", new URL("https://www.apache.org/licenses/LICENSE-2.0.txt")),
+    shellPrompt in ThisBuild := { state => "sbt (%s)> ".format(Project.extract(state).currentProject.id) },
+    ghreleaseRepoOrg := "Loopring",
+    ghreleaseRepoName := "release_repo")
 }
