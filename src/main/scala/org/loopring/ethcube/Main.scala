@@ -1,61 +1,44 @@
 package org.loopring.ethcube
 
-import scala.concurrent.duration._
-
+import akka.actor._
+import akka.http.scaladsl.Http
+import akka.stream.ActorMaterializer
+import com.typesafe.config._
+import org.loopring.ethcube.proto.data.EthereumProxySettings
 import org.slf4j.LoggerFactory
 
-import com.google.inject.Guice
-import com.typesafe.config.Config
-
-import akka.actor.ActorSystem
-import akka.http.scaladsl.Http
-import akka.http.scaladsl.server.Directives._
-import akka.stream.ActorMaterializer
-import org.loopring.ethcube.common.ActorInjector
-import org.loopring.ethcube.common.modules.SysAndConfigModule
-import org.loopring.ethcube.endpoints._
-import org.loopring.ethcube.model.BroadcastRequest
-import org.loopring.ethcube.modules.ServicesModule
-
-/**
- * entry main function
- */
 object Main extends App {
 
+  import collection.JavaConverters._
   lazy val Log = LoggerFactory.getLogger(getClass)
 
-  val injector = Guice.createInjector(new SysAndConfigModule(args), ServicesModule)
+  val config = ConfigFactory.load()
 
-  val config = injector.getInstance(classOf[Config])
+  implicit val system = ActorSystem("ethcube", config)
+  implicit val materializer = ActorMaterializer()
 
-  implicit val sys = injector.getInstance(classOf[ActorSystem])
-  implicit val mat = injector.getInstance(classOf[ActorMaterializer])
-  import sys.dispatcher
+  val settings: EthereumProxySettings = {
+    EthereumProxySettings(
+      config.getInt("pool-size"),
+      config.getInt("check-interval-seconds"),
+      config.getDouble("healthy-threshold").toFloat,
+      config.getConfigList("nodes").asScala map {
+        c =>
+          EthereumProxySettings.Node(
+            c.getString("host"),
+            c.getInt("port"),
+            c.getString("ipc-path"))
+      })
+  }
 
-  // monitor actor
-  val receiver = injector.getActor("WorkerControllerActor")
-  val initial = config.getInt("schedule.initial") seconds
-  val interval = config.getInt("schedule.interval") seconds
-
-  Log.info(s"worker monitor schedule { initial: ${initial}, interval: ${interval} }")
-  sys.scheduler.schedule(initialDelay = initial, interval = interval, receiver = receiver, BroadcastRequest)
-
-  // http server
-  val r = injector.getInstance(classOf[RootEndpoints])
-  val l = injector.getInstance(classOf[LooprEndpoints])
+  val ethreumProxy = system.actorOf(
+    Props(new EthereumProxy(settings)),
+    "ethereum_proxy")
 
   val host = config.getString("http.host")
   val port = config.getInt("http.port")
+  val endpoints = new Endpoints(ethreumProxy)
+  Http().bindAndHandle(endpoints.getRoutes, host, port)
 
-  Http().bindAndHandle(r() ~ l(), host, port)
-
-  Log.info("\n" + logo)
-
-  lazy val logo = """
-      ________  __    ______      __       
-     / ____/ /_/ /_  / ____/_  __/ /_  ___ 
-    / __/ / __/ __ \/ /   / / / / __ \/ _ \
-   / /___/ /_/ / / / /___/ /_/ / /_/ /  __/
-  /_____/\__/_/ /_/\____/\__,_/_.___/\___/  """ + s"http://${host}:${port}"
-
+  Log.info(s"ethcube started with http service at ${host}:${port}")
 }

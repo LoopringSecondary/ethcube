@@ -11,10 +11,18 @@ message EthereumProxySettings {
     message Node {
         string host = 1;
         int32 port = 2;
+        string ipcPath = 3;
     }
     int32 pool_size = 1;
     int32 check_interval_seconds = 2;
-    repeated Node nodes = 3;
+    float healthy_threshold = 3;
+    repeated Node nodes = 4;
+}
+
+message CheckBlockHeight{}
+
+message CheckBlockHeightResp{
+    int32 block_height = 1;
 }
 
 message JsonRpcReq {
@@ -22,6 +30,10 @@ message JsonRpcReq {
     string jsonrpc = 2;
     string method = 3;
     google.protobuf.Any params = 4;
+}
+
+message JsonRpcReqBatch {
+    repeated JsonRpcReq requests = 1;
 }
 
 message JsonRpcErr {
@@ -34,6 +46,10 @@ message JsonRpcRes {
     string jsonrpc = 2;
     google.protobuf.Any result = 3;
     JsonRpcErr error = 4;
+}
+
+message JsonRpcResBatch {
+    repeated JsonRpcRes responses = 1;
 }
 
 // case class JsonRpcRequest(id: Int, jsonrpc: String = "2.0",
