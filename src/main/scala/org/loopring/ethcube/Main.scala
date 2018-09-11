@@ -10,15 +10,16 @@ import org.slf4j.LoggerFactory
 object Main extends App {
 
   import collection.JavaConverters._
-  lazy val Log = LoggerFactory.getLogger(getClass)
+  lazy val log = LoggerFactory.getLogger(getClass)
 
-  val config = ConfigFactory.load()
+  val config = ConfigFactory.load().getConfig("dev")
 
   implicit val system = ActorSystem("ethcube", config)
   implicit val materializer = ActorMaterializer()
 
   val settings: EthereumProxySettings = {
-    val sub = config.getConfig("clients")
+    val sub = config.getConfig("proxy")
+
     EthereumProxySettings(
       sub.getInt("pool-size"),
       sub.getInt("check-interval-seconds"),
@@ -39,7 +40,8 @@ object Main extends App {
   val host = config.getString("http.host")
   val port = config.getInt("http.port")
   val endpoints = new Endpoints(ethreumProxy)
+
   Http().bindAndHandle(endpoints.getRoutes, host, port)
 
-  Log.info(s"ethcube started with http service at ${host}:${port}")
+  log.info(s"ethcube started with http service at ${host}:${port}")
 }
