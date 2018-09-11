@@ -5,8 +5,6 @@ import com.typesafe.sbt.SbtNativePackager._
 import com.typesafe.sbt.packager.Keys._
 import com.typesafe.sbt.packager.MappingsHelper._
 
-// import com.typesafe.sbt.SbtNativePackager.autoImport._
-
 object Settings {
 
   lazy val basicSettings: Seq[Setting[_]] = Seq(
@@ -15,11 +13,6 @@ object Settings {
     version := Globals.version,
     scalaVersion := Globals.scalaVersion,
     autoScalaLibrary := false,
-    // resolvers += Resolver.bintrayRepo("hseeberger", "maven"),
-    // resolvers ++= Resolvers.repositories,
-    javacOptions := Seq( //"-source", Globals.jvmVersion,
-    //"-target", Globals.jvmVersion
-    ),
     scalacOptions := Seq(
       "-encoding", "utf8",
       "-g:vars",
@@ -29,8 +22,6 @@ object Settings {
     fork in Test := false,
     parallelExecution in Test := false,
 
-    // publishArtifact in (Compile, packageSrc) := false,
-    // publishArtifact in (Compile, packageDoc) := false,
     shellPrompt in ThisBuild := { state => "sbt (%s)> ".format(Project.extract(state).currentProject.id) })
 
   // lazy val packageSettings: Seq[Setting[_]] = Seq(
