@@ -1,6 +1,5 @@
-
 import sbt._
-import sbt.Keys._
+import Keys._
 import Settings._
 
 lazy val slf4jVersion = "1.7.25"
@@ -42,7 +41,9 @@ lazy val commonDependency = Seq(
   "com.thesamet.scalapb" %% "scalapb-runtime" % scalapb.compiler.Version.scalapbVersion % "protobuf")
 
 lazy val ethcube = (project in file("."))
-  .enablePlugins(DockerPlugin, JavaAppPackaging)
+  .enablePlugins(DockerPlugin)
+  .enablePlugins(JavaAppPackaging)
+  .enablePlugins(AutomateHeaderPlugin)
   .settings(
     basicSettings,
     libraryDependencies ++= commonDependency,
