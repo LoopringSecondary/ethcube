@@ -28,13 +28,13 @@ object Main extends App {
   import collection.JavaConverters._
   lazy val log = LoggerFactory.getLogger(getClass)
 
-  val config = ConfigFactory.load().getConfig("dev")
+  val config = ConfigFactory.load()
 
   implicit val system = ActorSystem("ethcube", config)
   implicit val materializer = ActorMaterializer()
 
   val settings: EthereumProxySettings = {
-    val sub = config.getConfig("proxy")
+    val sub = config.getConfig("ethereum-proxy")
 
     EthereumProxySettings(
       sub.getInt("pool-size"),
