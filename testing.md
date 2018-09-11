@@ -1,4 +1,4 @@
-# 测试
+# Testing
 
 ## web3_clientVersion
 
@@ -112,7 +112,7 @@ curl -H "Content-Type: application/json" -X POST --data '{"jsonrpc":"2.0","metho
 
 https://github.com/ethereum/wiki/wiki/JSON-RPC#eth_getunclecountbyblockhash
 
-测试报错
+# Errors
 
 ## eth_getUncleCountByBlockNumber
 
