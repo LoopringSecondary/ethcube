@@ -38,7 +38,8 @@ private class IpcConnector(node: EthereumProxySettings.Node)
   val reader = new InputStreamReader(Channels.newInputStream(channel))
 
   def receive: Receive = {
-    case req: JsonRpcReq =>
+    case req: JsonRpcReq ⇒
+
       try {
         writer.print(JsonFormat.toJsonString(req))
         writer.flush()
@@ -48,11 +49,11 @@ private class IpcConnector(node: EthereumProxySettings.Node)
         result.flip()
         log.debug(s"ipc response raw: ${result}")
 
-        val response = JsonFormat.fromJsonString[JsonRpcRes](result.toString)
-        log.debug(s"ipx response object: ${response}")
-        sender ! response
+        // val response = JsonFormat.fromJsonString[JsonRpcRes](result.toString)
+        sender ! JsonRpcRes(result.toString())
       } catch {
-        case e: Throwable => log.error(e.getMessage)
+        case e: Throwable ⇒ log.error(e.getMessage)
       }
+
   }
 }
