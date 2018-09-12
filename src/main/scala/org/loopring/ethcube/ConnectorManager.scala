@@ -23,9 +23,12 @@ import akka.util.Timeout
 import akka.routing._
 import org.loopring.ethcube.proto.data._
 import scala.concurrent.duration._
+import scala.util.Random
+import org.json4s.native.JsonMethods._
+import org.json4s.DefaultFormats
 
 private class ConnectionManager(
-  requestRouter: Router,
+  requestRouterActor: ActorRef,
   connectorGroups: Seq[ActorRef],
   checkIntervalSeconds: Int,
   healthyThreshold: Float)
@@ -34,6 +37,9 @@ private class ConnectionManager(
   implicit val ec = context.system.dispatcher
   implicit val timeout: Timeout = Timeout(1 seconds)
   private val size = connectorGroups.size
+  implicit val formats = DefaultFormats
+
+  private val errCheckBlockHeightResp = CheckBlockHeightResp(currentBlock = 1, heightBlock = 0)
 
   context.system.scheduler.schedule(
     checkIntervalSeconds.seconds,
@@ -41,55 +47,79 @@ private class ConnectionManager(
     self,
     CheckBlockHeight())
 
+  /**
+   * updated date: 2018-9-12 by Toan
+   *
+   * 1、google.protobuf.Any 在序列化和反序列化 是需要对 Any 内部的 typeUrl 和 value字段进行处理
+   * 	暂时没找到合适的处理方式
+   *  link (https://github.com/scalapb/ScalaPB/blob/master/third_party/google/protobuf/any.proto)
+   *
+   * 2、增加了判断块高的逻辑, 当geth/parity完全同步的时候 返回的 result=false
+   * 	TODO(Toan) 如果这里面要想获取 当前块 应该配合 eth_blockNumber
+   *
+   * 3、把环形路由变成actor, 这样可以对路由actor发送消息
+   * 	link (https://doc.akka.io/docs/akka/current/routing.html#management-messages)
+   */
   def receive: Receive = {
 
-    case m: CheckBlockHeight =>
+    case m: CheckBlockHeight ⇒
+      log.info("start scheduler check highest block...")
+      val syncingJsonRpcReq = JsonRpcReqWrapped(id = Random.nextInt(100), jsonrpc = "2.0", method = "eth_syncing", params = None)
       for {
-        resps: Seq[(ActorRef, Int)] <- Future.sequence(connectorGroups.map {
-          g =>
+        resps: Seq[(ActorRef, CheckBlockHeightResp)] ← Future.sequence(connectorGroups.map {
+          g ⇒
             for {
-              resp <- (g ? m).mapTo[CheckBlockHeightResp].recover {
-                case e: TimeoutException =>
-                  log.error(s"timeout on getting blockheight: $g: ${e.getMessage}")
-                  CheckBlockHeightResp(0)
-
-                case e: Throwable =>
-                  log.error(s"exception on getting blockheight: $g: ${e.getMessage}")
-                  CheckBlockHeightResp(-1)
-              }
-            } yield (g, resp.blockHeight)
+              resp ← (g ? syncingJsonRpcReq.toPB).mapTo[JsonRpcRes]
+                .map(JsonRpcResWrapped.toJsonRpcResWrapped).map(_.result).map(toCheckBlockHeightResp).recover {
+                  case e: TimeoutException ⇒
+                    log.error(s"timeout on getting blockheight: $g: ${e.getMessage}")
+                    errCheckBlockHeightResp
+                  case e: Throwable ⇒
+                    log.error(s"exception on getting blockheight: $g: ${e.getMessage}")
+                    errCheckBlockHeightResp
+                }
+            } yield (g, resp)
         })
-        highestBlock: Int = resps.map(_._2).reduce(Math.max(_, _))
-        tier1: Seq[ActorRef] = resps.filter(highestBlock - _._2 < 1).map(_._1)
-        tier2: Seq[ActorRef] = resps.filter(highestBlock - _._2 < 2).map(_._1)
-        tier3: Seq[ActorRef] = resps.filter(highestBlock - _._2 < 3).map(_._1)
 
-        goodGroups = {
-          if (tier1.size >= size * healthyThreshold) tier1
-          else if (tier2.size >= size * healthyThreshold) tier2
-          else if (tier3.size > 0) tier3
-          else resps.map(_._1)
-        }
-
-        badGroups = connectorGroups.filter(goodGroups.contains)
+        goodGroupsOption = Seq(10, 20, 30).map { i ⇒
+          resps.filter(x ⇒ toCheckBlockCap(x._2, i)).map(_._1)
+        }.find(_.size >= size * healthyThreshold)
       } yield {
-        goodGroups.foreach { g =>
-          try {
-            requestRouter.addRoutee(ActorRefRoutee(g))
-          } catch {
-            case _: Throwable =>
-          }
+        // remove all routees
+        connectorGroups.foreach { g ⇒
+          val r = ActorSelectionRoutee(context.actorSelection(g.path))
+          requestRouterActor ! RemoveRoutee(ActorRefRoutee(g))
         }
-        badGroups.foreach { g =>
-          try {
-            requestRouter.removeRoutee(ActorRefRoutee(g))
-          } catch {
-            case _: Throwable =>
+        // only add Some(routee)
+        goodGroupsOption.foreach {
+          _.foreach { g ⇒
+            log.info(s"added to connectorGroup: ${g.path}")
+            val r = ActorSelectionRoutee(context.actorSelection(g.path))
+            requestRouterActor ! AddRoutee(r)
           }
         }
 
-        log.debug(s"${goodGroups.size} connectorGroup are still in good shape "
-          + s"(blockheight: $highestBlock): ${resps.mkString("[", ", ", "]")}")
+        log.info(s"GoodGroups: ${goodGroupsOption.map(_.size).getOrElse(0)} connectorGroup are still in good shape, end scheduler")
       }
   }
+
+  def toCheckBlockCap: PartialFunction[(CheckBlockHeightResp, Int), Boolean] = {
+    case (b: CheckBlockHeightResp, c: Int) ⇒
+      (b.heightBlock - b.currentBlock) < c && (b.heightBlock - b.currentBlock) > 0
+  }
+
+  def toCheckBlockHeightResp: PartialFunction[Any, CheckBlockHeightResp] = {
+    case m: Map[_, _] ⇒
+      val currentBlock = m.find(_._1 == "currentBlock").map(_._2).map(anyHexToInt).getOrElse(0)
+      val heightBlock = m.find(_._1 == "highestBlock").map(_._2).map(anyHexToInt).getOrElse(10)
+      CheckBlockHeightResp(currentBlock, heightBlock)
+    case b: Boolean ⇒ if (b) errCheckBlockHeightResp else CheckBlockHeightResp(1, 10)
+    case _ ⇒ errCheckBlockHeightResp
+  }
+
+  def anyHexToInt: PartialFunction[Any, Int] = {
+    case s: String ⇒ BigInt(s.replace("0x", ""), 16).toInt
+    case _ ⇒ 0
+  }
+
 }
