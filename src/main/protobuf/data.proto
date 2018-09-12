@@ -4,8 +4,6 @@ option java_multiple_files = true;
 option java_package = "org.loopring.ethcube.proto";
 package org.loopring.ethcube.proto;
 
-import "google/protobuf/any.proto";
-
 message EthereumProxySettings {
     message Node {
         string host = 1;
@@ -23,7 +21,6 @@ message CheckBlockHeight{}
 message CheckBlockHeightResp{
     int32 current_block = 1;
     int32 height_block = 2;
-    
 }
 
 message JsonRpcReq {

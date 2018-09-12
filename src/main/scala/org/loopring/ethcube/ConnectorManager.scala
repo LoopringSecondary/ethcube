@@ -26,6 +26,7 @@ import scala.concurrent.duration._
 import scala.util.Random
 import org.json4s.native.JsonMethods._
 import org.json4s.DefaultFormats
+import javax.swing.Spring.HeightSpring
 
 private class ConnectionManager(
   requestRouterActor: ActorRef,
@@ -55,7 +56,7 @@ private class ConnectionManager(
    *  link (https://github.com/scalapb/ScalaPB/blob/master/third_party/google/protobuf/any.proto)
    *
    * 2、修改了判断块高的逻辑, 当geth/parity完全同步的时候 返回的 result=false
-   * 	TODO(Toan) 如果这里面要想获取 当前块 应该配合 eth_blockNumber
+   * 	配合当前区块高度(eth_blockNumber) 做判断
    *
    * 3、把环形路由变成actor, 这样可以对路由actor发送消息
    * 	link (https://doc.akka.io/docs/akka/current/routing.html#management-messages)
@@ -65,12 +66,14 @@ private class ConnectionManager(
     case m: CheckBlockHeight ⇒
       log.info("start scheduler check highest block...")
       val syncingJsonRpcReq = JsonRpcReqWrapped(id = Random.nextInt(100), jsonrpc = "2.0", method = "eth_syncing", params = None)
+      val blockNumJsonRpcReq = JsonRpcReqWrapped(id = Random.nextInt(100), jsonrpc = "2.0", method = "eth_blockNumber", params = None)
+      import JsonRpcResWrapped._
       for {
         resps: Seq[(ActorRef, CheckBlockHeightResp)] ← Future.sequence(connectorGroups.map {
           g ⇒
             for {
-              resp ← (g ? syncingJsonRpcReq.toPB).mapTo[JsonRpcRes]
-                .map(JsonRpcResWrapped.toJsonRpcResWrapped).map(_.result).map(toCheckBlockHeightResp).recover {
+              syncingResp ← (g ? syncingJsonRpcReq.toPB).mapTo[JsonRpcRes]
+                .map(toJsonRpcResWrapped).map(_.result).map(toCheckBlockHeightResp).recover {
                   case e: TimeoutException ⇒
                     log.error(s"timeout on getting blockheight: $g: ${e.getMessage}")
                     errCheckBlockHeightResp
@@ -78,11 +81,19 @@ private class ConnectionManager(
                     log.error(s"exception on getting blockheight: $g: ${e.getMessage}")
                     errCheckBlockHeightResp
                 }
-            } yield (g, resp)
+              // get each node block number
+              blockNumResp ← (g ? blockNumJsonRpcReq.toPB).mapTo[JsonRpcRes].map(toJsonRpcResWrapped).map(_.result).map(anyHexToInt)
+              // heightBlcok = if(!syncing) currentBlock else syncing['height_block']
+            } yield {
+              val heightBlock = Seq(syncingResp.heightBlock, blockNumResp).max
+              log.info(s"{ currentBlock: ${blockNumResp}, highestBlock: ${heightBlock} } @ ${g.path}")
+              (g, syncingResp.copy(currentBlock = blockNumResp, heightBlock = heightBlock))
+            }
         })
-
+        heightBNInGroup = resps.map(_._2.heightBlock).max
         goodGroupsOption = Seq(10, 20, 30).map { i ⇒
-          resps.filter(x ⇒ toCheckBlockCap(x._2, i)).map(_._1)
+          // 计算最高块和当前块的差距
+          resps.filter(x ⇒ heightBNInGroup - x._2.currentBlock <= i).map(_._1)
         }.find(_.size >= size * healthyThreshold)
       } yield {
         // remove all routees
@@ -99,13 +110,9 @@ private class ConnectionManager(
           }
         }
 
-        log.info(s"GoodGroups: ${goodGroupsOption.map(_.size).getOrElse(0)} connectorGroup are still in good shape, end scheduler")
+        log.info(s"GoodGroups: ${goodGroupsOption.map(_.size).getOrElse(0)} connectorGroup are still in good shape, " +
+          s"in connectorGroup height block number: ${heightBNInGroup}, end scheduler")
       }
-  }
-
-  def toCheckBlockCap: PartialFunction[(CheckBlockHeightResp, Int), Boolean] = {
-    case (b: CheckBlockHeightResp, c: Int) ⇒
-      (b.heightBlock - b.currentBlock) < c && (b.heightBlock - b.currentBlock) > 0
   }
 
   def toCheckBlockHeightResp: PartialFunction[Any, CheckBlockHeightResp] = {
@@ -113,7 +120,6 @@ private class ConnectionManager(
       val currentBlock = m.find(_._1 == "currentBlock").map(_._2).map(anyHexToInt).getOrElse(0)
       val heightBlock = m.find(_._1 == "highestBlock").map(_._2).map(anyHexToInt).getOrElse(10)
       CheckBlockHeightResp(currentBlock, heightBlock)
-    case b: Boolean ⇒ if (b) errCheckBlockHeightResp else CheckBlockHeightResp(1, 10)
     case _ ⇒ errCheckBlockHeightResp
   }
 
