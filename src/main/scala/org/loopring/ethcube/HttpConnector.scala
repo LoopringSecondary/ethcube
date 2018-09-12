@@ -30,6 +30,7 @@ import akka.http.scaladsl.unmarshalling.Unmarshal
 import de.heikoseeberger.akkahttpjson4s.Json4sSupport
 import org.json4s._
 import org.loopring.ethcube.proto.data._
+import scalapb.json4s.JsonFormat
 
 private class HttpConnector(node: EthereumProxySettings.Node)(implicit val materilizer: ActorMaterializer)
   extends Actor
@@ -38,7 +39,6 @@ private class HttpConnector(node: EthereumProxySettings.Node)(implicit val mater
 
   import context.dispatcher
   implicit val serialization = jackson.Serialization
-  implicit val formats = DefaultFormats
   implicit val system: ActorSystem = context.system
 
   private val poolClientFlow: Flow[(HttpRequest, Promise[HttpResponse]), (Try[HttpResponse], Promise[HttpResponse]), Http.HostConnectionPool] = {
@@ -53,33 +53,34 @@ private class HttpConnector(node: EthereumProxySettings.Node)(implicit val mater
     Source.queue[(HttpRequest, Promise[HttpResponse])](100, OverflowStrategy.backpressure)
       .via(poolClientFlow)
       .toMat(Sink.foreach({
-        case (Success(resp), p) => p.success(resp)
-        case (Failure(e), p) => p.failure(e) // 这里可以定制一个json
+        case (Success(resp), p) ⇒ p.success(resp)
+        case (Failure(e), p) ⇒ p.failure(e)
       }))(Keep.left).run()(materilizer)
 
   private def request(request: HttpRequest): Future[HttpResponse] = {
     val responsePromise = Promise[HttpResponse]()
     queue.offer(request -> responsePromise).flatMap {
-      case QueueOfferResult.Enqueued =>
+      case QueueOfferResult.Enqueued ⇒
         responsePromise.future
-      case QueueOfferResult.Dropped =>
+      case QueueOfferResult.Dropped ⇒
         Future.failed(new RuntimeException("Queue overflowed."))
-      case QueueOfferResult.Failure(ex) =>
+      case QueueOfferResult.Failure(ex) ⇒
         Future.failed(ex)
-      case QueueOfferResult.QueueClosed =>
+      case QueueOfferResult.QueueClosed ⇒
         Future.failed(new RuntimeException("Queue closed."))
     }
   }
 
   private def handle(req: JsonRpcReq): Future[JsonRpcRes] = {
+
+    val entity = HttpEntity(ContentTypes.`application/json`, req.json)
     for {
-      reqEntity ← Marshal(req).to[RequestEntity]
-      httpResp ← request(HttpRequest(method = HttpMethods.POST, entity = reqEntity))
-      jsonRpcResp ← Unmarshal(httpResp).to[JsonRpcRes]
-    } yield jsonRpcResp
+      httpResp ← request(HttpRequest(method = HttpMethods.POST, entity = entity))
+      jsonStr ← httpResp.entity.dataBytes.map(_.utf8String).runReduce(_ + _)
+    } yield JsonRpcRes(jsonStr)
   }
 
   def receive: Receive = {
-    case req: JsonRpcReq => handle(req) pipeTo sender
+    case req: JsonRpcReq ⇒ handle(req) pipeTo sender
   }
 }
