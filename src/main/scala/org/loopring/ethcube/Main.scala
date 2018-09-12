@@ -45,7 +45,7 @@ object Main extends App {
           EthereumProxySettings.Node(
             c.getString("host"),
             c.getInt("port"),
-            c.getString("ipc-path"))
+            c.getString("ipcpath"))
       })
   }
 
