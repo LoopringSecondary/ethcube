@@ -28,38 +28,33 @@ class EthereumProxy(settings: EthereumProxySettings)(
   materilizer: ActorMaterializer)
   extends Actor with ActorLogging {
 
-  private val connectorGroups: Seq[ActorRef] = settings.nodes.map {
-    node =>
+  private val connectorGroups: Seq[ActorRef] = settings.nodes.zipWithIndex.map {
+    case (node, index) ⇒
       val props =
         if (node.ipcPath.nonEmpty) Props(new IpcConnector(node))
         else Props(new HttpConnector(node))
 
       context.actorOf(
         RoundRobinPool(settings.poolSize).props(props),
-        "connector_group")
+        s"connector_group_$index")
   }
 
-  private val requestRouter = new Router(
-    RoundRobinRoutingLogic(),
-    IndexedSeq(connectorGroups.map(g => ActorRefRoutee(g)): _*))
+  // 这里相当于添加了 ActorSelectionRoutee
+  private val requestRouterActor = context.actorOf(
+    RoundRobinGroup(connectorGroups.map(_.path.toString).toList).props(),
+    "request_router_actor")
 
   private val manager = context.actorOf(
     Props(new ConnectionManager(
-      requestRouter,
+      requestRouterActor,
       connectorGroups,
       settings.checkIntervalSeconds,
       settings.healthyThreshold)),
     "ethereum_connector_manager")
 
   def receive: Receive = {
-    case m: JsonRpcReq =>
-      if (requestRouter.routees.isEmpty) {
-        sender ! JsonRpcRes(
-          id = None,
-          jsonrpc = "2.0",
-          error = Some(JsonRpcErr(600, "no routee")))
-      } else {
-        requestRouter.route(m, sender)
-      }
+    case m: JsonRpcReq ⇒
+      // 路由为空 这里是 timeout
+      requestRouterActor.forward(m)
   }
 }

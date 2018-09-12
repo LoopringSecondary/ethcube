@@ -52,12 +52,12 @@ class EthereumProxyEndpoints(ethereumProxy: ActorRef)(implicit
   implicit val context = system.dispatcher
   implicit val serialization = jackson.Serialization
   implicit val formats = DefaultFormats
-  implicit val timeout = Timeout(1 seconds)
+  implicit val timeout = Timeout(3 seconds)
   val log = Logging(system, this)
 
   def getRoutes(): Route = {
     val exceptionHandler = ExceptionHandler {
-      case e: Throwable =>
+      case e: Throwable ⇒
         log.error(e.getMessage)
         complete(errorResponse(e.getMessage))
     }
@@ -67,8 +67,8 @@ class EthereumProxyEndpoints(ethereumProxy: ActorRef)(implicit
   private lazy val route = pathEndOrSingleSlash {
     concat(
       post {
-        entity(as[JsonRpcReq]) { req =>
-          val f = (ethereumProxy ? req).mapTo[JsonRpcRes]
+        entity(as[JsonRpcReqWrapped]) { req ⇒
+          val f = (ethereumProxy ? req.toPB).mapTo[JsonRpcRes].map(JsonRpcResWrapped.toJsonRpcResWrapped)
           complete(f)
         }
       })
@@ -77,8 +77,12 @@ class EthereumProxyEndpoints(ethereumProxy: ActorRef)(implicit
       pathEnd {
         concat(
           post {
-            entity(as[JsonRpcReqBatch]) { req =>
-              val f = (ethereumProxy ? req).mapTo[JsonRpcResBatch]
+            // reqs/reqs require : [{}, {}]
+            entity(as[Seq[JsonRpcReqWrapped]]) { reqs ⇒
+              val f = Future.sequence(
+                reqs.map(r ⇒ (ethereumProxy ? r.toPB).mapTo[JsonRpcRes]
+                  .map(JsonRpcResWrapped.toJsonRpcResWrapped)))
+
               complete(f)
             }
           })
