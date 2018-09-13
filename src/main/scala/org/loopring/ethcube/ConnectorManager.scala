@@ -29,10 +29,11 @@ import org.json4s.DefaultFormats
 import javax.swing.Spring.HeightSpring
 
 private class ConnectionManager(
-  requestRouterActor: ActorRef,
-  connectorGroups: Seq[ActorRef],
-  checkIntervalSeconds: Int,
-  healthyThreshold: Float)
+    requestRouterActor: ActorRef,
+    connectorGroups: Seq[ActorRef],
+    checkIntervalSeconds: Int,
+    healthyThreshold: Float
+)
   extends Actor with ActorLogging {
 
   implicit val ec = context.system.dispatcher
@@ -46,10 +47,10 @@ private class ConnectionManager(
     checkIntervalSeconds.seconds,
     checkIntervalSeconds.seconds,
     self,
-    CheckBlockHeight())
+    CheckBlockHeight()
+  )
 
-  /**
-   * updated date: 2018-9-12 by Toan
+  /** updated date: 2018-9-12 by Toan
    *
    *  1、google.protobuf.Any 在序列化和反序列化 是需要对 Any 内部的 typeUrl 和 value字段进行处理
    *  	暂时没找到合适的处理方式
@@ -121,12 +122,12 @@ private class ConnectionManager(
       val heightBlock = m.find(_._1 == "highestBlock").map(_._2).map(anyHexToInt).getOrElse(10)
       CheckBlockHeightResp(currentBlock, heightBlock)
     case b: Boolean ⇒ if (b) errCheckBlockHeightResp else CheckBlockHeightResp(1, 10)
-    case _ ⇒ errCheckBlockHeightResp
+    case _          ⇒ errCheckBlockHeightResp
   }
 
   def anyHexToInt: PartialFunction[Any, Int] = {
     case s: String ⇒ BigInt(s.replace("0x", ""), 16).toInt
-    case _ ⇒ 0
+    case _         ⇒ 0
   }
 
 }
