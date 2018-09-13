@@ -24,8 +24,9 @@ import org.loopring.ethcube.proto.data._
 import scala.collection.immutable.IndexedSeq
 
 class EthereumProxy(settings: EthereumProxySettings)(
-  implicit
-  materilizer: ActorMaterializer)
+    implicit
+    materilizer: ActorMaterializer
+)
   extends Actor with ActorLogging {
 
   private val connectorGroups: Seq[ActorRef] = settings.nodes.zipWithIndex.map {
@@ -36,21 +37,25 @@ class EthereumProxy(settings: EthereumProxySettings)(
 
       context.actorOf(
         RoundRobinPool(settings.poolSize).props(props),
-        s"connector_group_$index")
+        s"connector_group_$index"
+      )
   }
 
   // 这里相当于添加了 ActorSelectionRoutee
   private val requestRouterActor = context.actorOf(
     RoundRobinGroup(connectorGroups.map(_.path.toString).toList).props(),
-    "request_router_actor")
+    "request_router_actor"
+  )
 
   private val manager = context.actorOf(
     Props(new ConnectionManager(
       requestRouterActor,
       connectorGroups,
       settings.checkIntervalSeconds,
-      settings.healthyThreshold)),
-    "ethereum_connector_manager")
+      settings.healthyThreshold
+    )),
+    "ethereum_connector_manager"
+  )
 
   def receive: Receive = {
     case m: JsonRpcReq ⇒
