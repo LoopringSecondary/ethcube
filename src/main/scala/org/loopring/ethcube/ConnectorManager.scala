@@ -26,13 +26,13 @@ import scala.concurrent.duration._
 import scala.util.Random
 import org.json4s.native.JsonMethods._
 import org.json4s.DefaultFormats
+import javax.swing.Spring.HeightSpring
 
 private class ConnectionManager(
-    requestRouterActor: ActorRef,
-    connectorGroups: Seq[ActorRef],
-    checkIntervalSeconds: Int,
-    healthyThreshold: Float
-)
+  requestRouterActor: ActorRef,
+  connectorGroups: Seq[ActorRef],
+  checkIntervalSeconds: Int,
+  healthyThreshold: Float)
   extends Actor with ActorLogging {
 
   implicit val ec = context.system.dispatcher
@@ -46,10 +46,10 @@ private class ConnectionManager(
     checkIntervalSeconds.seconds,
     checkIntervalSeconds.seconds,
     self,
-    CheckBlockHeight()
-  )
+    CheckBlockHeight())
 
-  /** updated date: 2018-9-12 by Toan
+  /**
+   * updated date: 2018-9-12 by Toan
    *
    *  1、google.protobuf.Any 在序列化和反序列化 是需要对 Any 内部的 typeUrl 和 value字段进行处理
    *  	暂时没找到合适的处理方式
@@ -66,12 +66,14 @@ private class ConnectionManager(
     case m: CheckBlockHeight ⇒
       log.info("start scheduler check highest block...")
       val syncingJsonRpcReq = JsonRpcReqWrapped(id = Random.nextInt(100), jsonrpc = "2.0", method = "eth_syncing", params = None)
+      val blockNumJsonRpcReq = JsonRpcReqWrapped(id = Random.nextInt(100), jsonrpc = "2.0", method = "eth_blockNumber", params = None)
+      import JsonRpcResWrapped._
       for {
         resps: Seq[(ActorRef, CheckBlockHeightResp)] ← Future.sequence(connectorGroups.map {
           g ⇒
             for {
-              resp ← (g ? syncingJsonRpcReq.toPB).mapTo[JsonRpcRes]
-                .map(JsonRpcResWrapped.toJsonRpcResWrapped).map(_.result).map(toCheckBlockHeightResp).recover {
+              syncingResp ← (g ? syncingJsonRpcReq.toPB).mapTo[JsonRpcRes]
+                .map(toJsonRpcResWrapped).map(_.result).map(toCheckBlockHeightResp).recover {
                   case e: TimeoutException ⇒
                     log.error(s"timeout on getting blockheight: $g: ${e.getMessage}")
                     errCheckBlockHeightResp
@@ -79,11 +81,19 @@ private class ConnectionManager(
                     log.error(s"exception on getting blockheight: $g: ${e.getMessage}")
                     errCheckBlockHeightResp
                 }
-            } yield (g, resp)
+              // get each node block number
+              blockNumResp ← (g ? blockNumJsonRpcReq.toPB).mapTo[JsonRpcRes].map(toJsonRpcResWrapped).map(_.result).map(anyHexToInt)
+              // heightBlcok = if(!syncing) currentBlock else syncing['height_block']
+            } yield {
+              val heightBlock = Seq(syncingResp.heightBlock, blockNumResp).max
+              log.info(s"{ currentBlock: ${blockNumResp}, highestBlock: ${heightBlock} } @ ${g.path}")
+              (g, syncingResp.copy(currentBlock = blockNumResp, heightBlock = heightBlock))
+            }
         })
-
+        heightBNInGroup = resps.map(_._2.heightBlock).max
         goodGroupsOption = Seq(10, 20, 30).map { i ⇒
-          resps.filter(x ⇒ toCheckBlockCap(x._2, i)).map(_._1)
+          // 计算最高块和当前块的差距
+          resps.filter(x ⇒ heightBNInGroup - x._2.currentBlock <= i).map(_._1)
         }.find(_.size >= size * healthyThreshold)
       } yield {
         // remove all routees
@@ -100,13 +110,9 @@ private class ConnectionManager(
           }
         }
 
-        log.info(s"GoodGroups: ${goodGroupsOption.map(_.size).getOrElse(0)} connectorGroup are still in good shape, end scheduler")
+        log.info(s"GoodGroups: ${goodGroupsOption.map(_.size).getOrElse(0)} connectorGroup are still in good shape, " +
+          s"in connectorGroup height block number: ${heightBNInGroup}, end scheduler")
       }
-  }
-
-  def toCheckBlockCap: PartialFunction[(CheckBlockHeightResp, Int), Boolean] = {
-    case (b: CheckBlockHeightResp, c: Int) ⇒
-      (b.heightBlock - b.currentBlock) < c && (b.heightBlock - b.currentBlock) > 0
   }
 
   def toCheckBlockHeightResp: PartialFunction[Any, CheckBlockHeightResp] = {
@@ -115,12 +121,12 @@ private class ConnectionManager(
       val heightBlock = m.find(_._1 == "highestBlock").map(_._2).map(anyHexToInt).getOrElse(10)
       CheckBlockHeightResp(currentBlock, heightBlock)
     case b: Boolean ⇒ if (b) errCheckBlockHeightResp else CheckBlockHeightResp(1, 10)
-    case _          ⇒ errCheckBlockHeightResp
+    case _ ⇒ errCheckBlockHeightResp
   }
 
   def anyHexToInt: PartialFunction[Any, Int] = {
     case s: String ⇒ BigInt(s.replace("0x", ""), 16).toInt
-    case _         ⇒ 0
+    case _ ⇒ 0
   }
 
 }
