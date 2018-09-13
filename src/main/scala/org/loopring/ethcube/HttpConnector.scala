@@ -44,7 +44,8 @@ private class HttpConnector(node: EthereumProxySettings.Node)(implicit val mater
   private val poolClientFlow: Flow[(HttpRequest, Promise[HttpResponse]), (Try[HttpResponse], Promise[HttpResponse]), Http.HostConnectionPool] = {
     Http().cachedHostConnectionPool[Promise[HttpResponse]](
       host = node.host,
-      port = node.port)
+      port = node.port
+    )
   }
 
   log.info(s"connecting Ethereum at ${node.host}:${node.port}")
@@ -54,7 +55,7 @@ private class HttpConnector(node: EthereumProxySettings.Node)(implicit val mater
       .via(poolClientFlow)
       .toMat(Sink.foreach({
         case (Success(resp), p) ⇒ p.success(resp)
-        case (Failure(e), p) ⇒ p.failure(e)
+        case (Failure(e), p)    ⇒ p.failure(e)
       }))(Keep.left).run()(materilizer)
 
   private def request(request: HttpRequest): Future[HttpResponse] = {

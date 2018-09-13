@@ -41,17 +41,20 @@ object Main extends App {
       sub.getInt("check-interval-seconds"),
       sub.getDouble("healthy-threshold").toFloat,
       sub.getConfigList("nodes").asScala map {
-        c =>
+        c ⇒
           EthereumProxySettings.Node(
             c.getString("host"),
             c.getInt("port"),
-            c.getString("ipcpath"))
-      })
+            c.getString("ipcpath")
+          )
+      }
+    )
   }
 
   val ethreumProxy = system.actorOf(
     Props(new EthereumProxy(settings)),
-    "ethereum_proxy")
+    "ethereum_proxy"
+  )
 
   val host = config.getString("http.host")
   val port = config.getInt("http.port")

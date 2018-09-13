@@ -45,8 +45,9 @@ object EthereumProxyEndpoints {
 }
 
 class EthereumProxyEndpoints(ethereumProxy: ActorRef)(implicit
-  system: ActorSystem,
-  materializer: ActorMaterializer)
+    system: ActorSystem,
+    materializer: ActorMaterializer
+)
   extends Json4sSupport {
 
   implicit val context = system.dispatcher
@@ -71,7 +72,8 @@ class EthereumProxyEndpoints(ethereumProxy: ActorRef)(implicit
           val f = (ethereumProxy ? req.toPB).mapTo[JsonRpcRes].map(JsonRpcResWrapped.toJsonRpcResWrapped)
           complete(f)
         }
-      })
+      }
+    )
   } ~ pathPrefix("batch") {
     concat(
       pathEnd {
@@ -81,12 +83,15 @@ class EthereumProxyEndpoints(ethereumProxy: ActorRef)(implicit
             entity(as[Seq[JsonRpcReqWrapped]]) { reqs ⇒
               val f = Future.sequence(
                 reqs.map(r ⇒ (ethereumProxy ? r.toPB).mapTo[JsonRpcRes]
-                  .map(JsonRpcResWrapped.toJsonRpcResWrapped)))
+                  .map(JsonRpcResWrapped.toJsonRpcResWrapped))
+              )
 
               complete(f)
             }
-          })
-      })
+          }
+        )
+      }
+    )
   }
 
   private def errorResponse(msg: String): HttpResponse = {
@@ -94,6 +99,8 @@ class EthereumProxyEndpoints(ethereumProxy: ActorRef)(implicit
       StatusCodes.InternalServerError,
       entity = HttpEntity(
         ContentTypes.`application/json`,
-        s"""{"jsonrpc":"2.0", "error": {"code": 500, "message": "${msg}"}}"""))
+        s"""{"jsonrpc":"2.0", "error": {"code": 500, "message": "${msg}"}}"""
+      )
+    )
   }
 }
