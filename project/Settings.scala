@@ -17,6 +17,7 @@ object Settings {
     scalaVersion := Globals.scalaVersion,
     organization := "org.loopring",
     organizationName := "Loopring Foundation",
+    homepage := Some(url("https://loopring.org")),
     developers := List(
       Developer(
         id = "foundation@loopring.org",
