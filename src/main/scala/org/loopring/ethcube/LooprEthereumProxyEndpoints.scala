@@ -1,3 +1,19 @@
+/*
+ * Copyright 2018 Loopring Foundation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.loopring.ethcube
 
 import akka.pattern.ask
@@ -18,8 +34,9 @@ import org.loopring.lightcone.proto.eth_jsonrpc._
 import akka.stream.ActorMaterializer
 
 class LooprEthereumProxyEndpoints(ethereumProxy: ActorRef)(implicit
-  system: ActorSystem,
-  materializer: ActorMaterializer)
+    system: ActorSystem,
+    materializer: ActorMaterializer
+)
   extends Json4sSupport {
 
   implicit val context = system.dispatcher
@@ -38,19 +55,26 @@ class LooprEthereumProxyEndpoints(ethereumProxy: ActorRef)(implicit
   }
 
   private val etherRoutingMap = Map[String, RequestContext ⇒ Future[RouteResult]](
-    "eth_getBalance" -> ethGetBalanceReq,
+    "eth_blockNumber" -> ethBlockNumber,
+    "eth_getBalance" -> ethGetBalance,
     "eth_getTransactionByHash" -> ethGetTransactionByHash,
     "eth_getTransactionReceipt" -> ethGetTransactionReceipt,
     "eth_getBlockWithTxHashByNumber" -> getBlockWithTxHashByNumber,
     "eth_getBlockWithTxObjectByNumber" -> getBlockWithTxObjectByNumber,
     "eth_getBlockWithTxHashByHash" -> getBlockWithTxHashByHash,
     "eth_getBlockWithTxObjectByHash" -> getBlockWithTxObjectByHash,
-    "debug_traceTransaction" -> traceTransaction)
-  //    "getBalance" -> getBalance,
-  //    "getAllowance" -> getAllowance,
-  //    "sendRawTransaction" -> sendRawTransaction)
+    "debug_traceTransaction" -> traceTransaction,
+    "erc20_getBalance" -> getBalance,
+    "erc20_getAllowance" -> getAllowance,
+    "eth_sendRawTransaction" -> ethSendRawTransaction
+  )
 
-  private def ethGetBalanceReq =
+  private def ethBlockNumber = {
+    val f = (ethereumProxy ? EthBlockNumberReq()).mapTo[EthBlockNumberRes]
+    complete(f)
+  }
+
+  private def ethGetBalance =
     entity(as[EthGetBalanceReq]) { req ⇒
       val f = (ethereumProxy ? req).mapTo[EthGetBalanceRes]
       complete(f)
@@ -96,4 +120,21 @@ class LooprEthereumProxyEndpoints(ethereumProxy: ActorRef)(implicit
       complete(f)
     }
 
+  private def getBalance =
+    entity(as[GetBalanceReq]) { req ⇒
+      val f = (ethereumProxy ? req).mapTo[GetBalanceRes]
+      complete(f)
+    }
+
+  private def getAllowance =
+    entity(as[GetAllowanceReq]) { req ⇒
+      val f = (ethereumProxy ? req).mapTo[GetAllowanceRes]
+      complete(f)
+    }
+
+  private def ethSendRawTransaction =
+    entity(as[SendRawTransactionReq]) { req ⇒
+      val f = (ethereumProxy ? req).mapTo[SendRawTransactionRes]
+      complete(f)
+    }
 }
