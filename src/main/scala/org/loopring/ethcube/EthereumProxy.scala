@@ -61,5 +61,7 @@ class EthereumProxy(settings: EthereumProxySettings)(
     case m: JsonRpcReq ⇒
       // 路由为空 这里是 timeout
       requestRouterActor.forward(m)
+    case req: ProtoBuf[_] ⇒
+      requestRouterActor.forward(req)
   }
 }
