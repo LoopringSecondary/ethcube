@@ -95,77 +95,78 @@ private class HttpConnector(node: EthereumProxySettings.Node)(implicit val mater
     } yield jsonStr
   }
 
-  private def postMessage[T <: ProtoBuf[T]](
+  private def sendMessage[T <: ProtoBuf[T]](
     method: String
   )(
     params: Seq[Any]
   )(
     implicit
     c: scalapb.GeneratedMessageCompanion[T]
-  ): Future[T] = {
+  ) = {
     val jsonRpc = JsonRpcReqWrapped(id = Random.nextInt(100), jsonrpc = "2.0", method = method, params = params)
-    for {
+    val resp = for {
       entity ← Marshal(jsonRpc).to[RequestEntity]
       jsonStr ← post(entity)
-      _ = println("jsonStr ==>>>" + jsonStr)
     } yield JsonFormat.fromJsonString[T](jsonStr)
+
+    resp pipeTo sender
   }
 
   def receive: Receive = {
     case req: JsonRpcReq ⇒ post(req.json).map(JsonRpcRes(_)) pipeTo sender
     case r: EthBlockNumberReq ⇒
-      postMessage[EthBlockNumberRes]("eth_blockNumber") {
+      sendMessage[EthBlockNumberRes]("eth_blockNumber") {
         Seq.empty
-      } pipeTo sender
+      }
     case r: EthGetBalanceReq ⇒
-      postMessage[EthGetBalanceRes]("eth_getBalance") {
+      sendMessage[EthGetBalanceRes]("eth_getBalance") {
         Seq(r.address, r.tag)
-      } pipeTo sender
+      }
     case r: GetTransactionByHashReq ⇒
-      postMessage[GetTransactionByHashRes]("eth_getTransactionByHash") {
+      sendMessage[GetTransactionByHashRes]("eth_getTransactionByHash") {
         Seq(r.hash)
-      } pipeTo sender
+      }
     case r: GetTransactionReceiptReq ⇒
-      postMessage[GetTransactionReceiptRes]("eth_getTransactionReceipt") {
+      sendMessage[GetTransactionReceiptRes]("eth_getTransactionReceipt") {
         Seq(r.hash)
-      } pipeTo sender
+      }
     case r: GetBlockWithTxHashByNumberReq ⇒
-      postMessage[GetBlockWithTxHashByNumberRes]("eth_getBlockByNumber") {
+      sendMessage[GetBlockWithTxHashByNumberRes]("eth_getBlockByNumber") {
         Seq(r.blockNumber, false)
-      } pipeTo sender
+      }
     case r: GetBlockWithTxObjectByNumberReq ⇒
-      postMessage[GetBlockWithTxObjectByNumberRes]("eth_getBlockByNumber") {
+      sendMessage[GetBlockWithTxObjectByNumberRes]("eth_getBlockByNumber") {
         Seq(r.blockNumber, true)
-      } pipeTo sender
+      }
     case r: GetBlockWithTxHashByHashReq ⇒
-      postMessage[GetBlockWithTxHashByHashRes]("eth_getBlockByHash") {
+      sendMessage[GetBlockWithTxHashByHashRes]("eth_getBlockByHash") {
         Seq(r.blockHash, false)
-      } pipeTo sender
+      }
     case r: GetBlockWithTxObjectByHashReq ⇒
-      postMessage[GetBlockWithTxObjectByHashRes]("eth_getBlockByHash") {
+      sendMessage[GetBlockWithTxObjectByHashRes]("eth_getBlockByHash") {
         Seq(r.blockHash, true)
-      } pipeTo sender
+      }
     case r: TraceTransactionReq ⇒
-      postMessage[TraceTransactionRes]("debug_traceTransaction") {
+      sendMessage[TraceTransactionRes]("debug_traceTransaction") {
         val debugParams = DebugParams(DEBUG_TIMEOUT_STR, DEBUG_TRACER)
         Seq(r.txhash, debugParams)
-      } pipeTo sender
+      }
     case r: GetBalanceReq ⇒
-      postMessage[GetBalanceRes](ETH_CALL) {
+      sendMessage[GetBalanceRes](ETH_CALL) {
         val data = abiFunction(ABI_BALANCEOF)(r.owner)
         val args = TransactionParam().withTo(r.token).withData(data)
         Seq(args, r.tag)
-      } pipeTo sender
+      }
     case r: GetAllowanceReq ⇒
-      postMessage[GetAllowanceRes](ETH_CALL) {
+      sendMessage[GetAllowanceRes](ETH_CALL) {
         val data = abiFunction(ABI_ALLOWANCE)(r.owner)
         val args = TransactionParam().withTo(r.token).withData(data)
         Seq(args, r.tag)
-      } pipeTo sender
+      }
     case r: SendRawTransactionReq ⇒
-      postMessage[SendRawTransactionRes]("eth_sendRawTransaction") {
+      sendMessage[SendRawTransactionRes]("eth_sendRawTransaction") {
         Seq(r.data)
-      } pipeTo sender
+      }
   }
 
   implicit def functionToHex: PartialFunction[org.web3j.abi.datatypes.Function, String] = {
