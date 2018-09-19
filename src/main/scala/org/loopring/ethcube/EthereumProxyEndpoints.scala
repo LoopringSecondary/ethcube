@@ -54,44 +54,47 @@ class EthereumProxyEndpoints(ethereumProxy: ActorRef)(implicit
   implicit val serialization = jackson.Serialization
   implicit val formats = DefaultFormats
   implicit val timeout = Timeout(3 seconds)
+
+  // add loopr endpoints
+  lazy val loopr = new LooprEthereumProxyEndpoints(ethereumProxy)
+
   val log = Logging(system, this)
 
   def getRoutes(): Route = {
     val exceptionHandler = ExceptionHandler {
+      case e: AskTimeoutException ⇒ complete(errorResponse("Timeout or Has no routee"))
       case e: Throwable ⇒
-        log.error(e.getMessage)
+        log.error(e, "error: ")
         complete(errorResponse(e.getMessage))
     }
     handleExceptions(exceptionHandler)(route)
   }
 
+  import JsonRpcResWrapped._
+
   private lazy val route = pathEndOrSingleSlash {
-    concat(
+    post {
+      entity(as[JsonRpcReqWrapped]) { req ⇒
+        val f = (ethereumProxy ? req.toPB).mapTo[JsonRpcRes].map(toJsonRpcResWrapped)
+        complete(f)
+      }
+    }
+  } ~ batchRoute ~ loopr.routes
+
+  private lazy val batchRoute = pathPrefix("batch") {
+    pathEnd {
       post {
-        entity(as[JsonRpcReqWrapped]) { req ⇒
-          val f = (ethereumProxy ? req.toPB).mapTo[JsonRpcRes].map(JsonRpcResWrapped.toJsonRpcResWrapped)
+        // requests/responses require : [{}, {}]
+        entity(as[Seq[JsonRpcReqWrapped]]) { reqs ⇒
+          val f = Future.sequence(
+            reqs.map(r ⇒ (ethereumProxy ? r.toPB).mapTo[JsonRpcRes]
+              .map(toJsonRpcResWrapped))
+          )
+
           complete(f)
         }
       }
-    )
-  } ~ pathPrefix("batch") {
-    concat(
-      pathEnd {
-        concat(
-          post {
-            // reqs/reqs require : [{}, {}]
-            entity(as[Seq[JsonRpcReqWrapped]]) { reqs ⇒
-              val f = Future.sequence(
-                reqs.map(r ⇒ (ethereumProxy ? r.toPB).mapTo[JsonRpcRes]
-                  .map(JsonRpcResWrapped.toJsonRpcResWrapped))
-              )
-
-              complete(f)
-            }
-          }
-        )
-      }
-    )
+    }
   }
 
   private def errorResponse(msg: String): HttpResponse = {
@@ -99,7 +102,7 @@ class EthereumProxyEndpoints(ethereumProxy: ActorRef)(implicit
       StatusCodes.InternalServerError,
       entity = HttpEntity(
         ContentTypes.`application/json`,
-        s"""{"jsonrpc":"2.0", "error": {"code": 500, "message": "${msg}"}}"""
+        s"""{"jsonrpc":"2.0", "error": {"code": 500, "message": "${msg.replaceAll("\"", "\\\"")}"}}"""
       )
     )
   }
