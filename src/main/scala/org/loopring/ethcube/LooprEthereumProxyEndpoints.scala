@@ -64,9 +64,14 @@ class LooprEthereumProxyEndpoints(ethereumProxy: ActorRef)(implicit
     "eth_getBlockWithTxHashByHash" -> routeContext[GetBlockWithTxHashByHashReq, GetBlockWithTxHashByHashRes],
     "eth_getBlockWithTxObjectByHash" -> routeContext[GetBlockWithTxObjectByHashReq, GetBlockWithTxObjectByHashRes],
     "debug_traceTransaction" -> routeContext[TraceTransactionReq, TraceTransactionRes],
+    "eth_sendRawTransaction" -> routeContext[SendRawTransactionReq, SendRawTransactionRes],
+    "eth_getTransactionCount" -> routeContext[GetNonceReq, GetNonceRes],
+    "eth_getBlockTransactionCountByHash" -> routeContext[GetBlockTransactionCountReq, GetBlockTransactionCountRes],
     "erc20_getBalance" -> routeContext[GetBalanceReq, GetBalanceRes],
     "erc20_getAllowance" -> routeContext[GetAllowanceReq, GetAllowanceRes],
-    "eth_sendRawTransaction" -> routeContext[SendRawTransactionReq, SendRawTransactionRes]
+    "erc20_getName" -> routeContext[GetTokenNameReq, GetTokenNameRes],
+    "erc20_getSymbol" -> routeContext[GetTokenSymbolReq, GetTokenSymbolRes],
+    "erc20_getDecimals" -> routeContext[GetDecimalsReq, GetDecimalsRes]
   )
 
   private def routeContext[P: Manifest, R: Manifest] = {
