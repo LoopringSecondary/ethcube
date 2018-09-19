@@ -26,8 +26,8 @@ import org.loopring.ethcube.proto.data._
 import scalapb.json4s.JsonFormat
 
 private class IpcConnector(node: EthereumProxySettings.Node)
-    extends Actor
-    with ActorLogging {
+  extends Actor
+  with ActorLogging {
 
   val address = new UnixSocketAddress(new File(node.ipcPath))
   val channel = UnixSocketChannel.open(address)
@@ -51,9 +51,6 @@ private class IpcConnector(node: EthereumProxySettings.Node)
       } catch {
         case e: Throwable ⇒ log.error(e.getMessage)
       }
-
-    case r: String ⇒
-      println("")
 
   }
 }
