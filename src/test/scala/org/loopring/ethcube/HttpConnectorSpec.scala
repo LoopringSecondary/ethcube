@@ -17,9 +17,14 @@
 package org.loopring.ethcube
 
 import akka.actor.ActorSystem
-import akka.testkit.{ ImplicitSender, TestKit }
+import akka.pattern.ask
+import akka.testkit._
 import org.scalatest._
 import org.loopring.accessor._
+import org.loopring.ethcube.proto.eth_jsonrpc._
+
+import scala.concurrent.Await
+import scala.concurrent.ExecutionContext.Implicits.global
 
 class HttpConnectorSpec() extends TestKit(ActorSystem("MySpec")) with ImplicitSender
   with WordSpecLike with Matchers with BeforeAndAfterAll {
@@ -30,11 +35,12 @@ class HttpConnectorSpec() extends TestKit(ActorSystem("MySpec")) with ImplicitSe
     TestKit.shutdownActorSystem(system)
   }
 
-  "connector" must {
+  "ethBlockNumberReq" in {
+    val resultFuture = for {
+      resp ← connector ? EthBlockNumberReq()
+    } yield resp
 
-    "start single round" in {
-      connector ! ""
-      Thread.sleep(10000)
-    }
+    val result = Await.result(resultFuture, timeout.duration)
+    info(result.toString)
   }
 }
