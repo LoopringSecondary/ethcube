@@ -110,7 +110,8 @@ class HttpConnector(node: EthereumProxySettings.Node)(implicit val materilizer: 
     val resp = for {
       entity ← Marshal(jsonRpc).to[RequestEntity]
       jsonStr ← post(entity)
-      _ = println("jsonstr =>>>" + jsonStr)
+      _ = log.info(s"response: $jsonStr")
+      // _ = println("jsonstr =>>>" + jsonStr)
     } yield JsonFormat.fromJsonString[T](jsonStr)
     resp pipeTo sender
   }
@@ -171,51 +172,7 @@ class HttpConnector(node: EthereumProxySettings.Node)(implicit val materilizer: 
       sendMessage[GetBlockTransactionCountRes]("eth_getBlockTransactionCountByHash") {
         Seq(r.blockHash)
       }
-    // erc20
-    case r: GetBalanceReq ⇒
-      sendMessage[GetBalanceRes](ETH_CALL) {
-        val data = abiFunction(ABI_ERC20_BALANCEOF)(r.owner)
-        val args = TransactionParam().withTo(r.token).withData(data)
-        Seq(args, r.tag)
-      }
-    case r: GetAllowanceReq ⇒
-      sendMessage[GetAllowanceRes](ETH_CALL) {
-        val data = abiFunction(ABI_ERC20_ALLOWANCE)(r.owner)
-        val args = TransactionParam().withTo(r.token).withData(data)
-        Seq(args, r.tag)
-      }
-    case r: GetDecimalsReq ⇒
-      sendMessage[GetDecimalsRes](ETH_CALL) {
-        val data = abiFunction(ABI_ERC20_DECIMALS)("")
-        val args = TransactionParam().withTo(r.token).withData(data)
-        Seq(args)
-      }
-    case r: GetTokenNameReq ⇒
-      sendMessage[GetTokenNameRes](ETH_CALL) {
-        val data = abiFunction(ABI_ERC20_NAME)("")
-        val args = TransactionParam().withTo(r.token).withData(data)
-        Seq(args)
-      }
-    case r: GetTokenSymbolReq ⇒
-      sendMessage[GetTokenSymbolRes](ETH_CALL) {
-        val data = abiFunction(ABI_ERC20_SYMBOL)("")
-        val args = TransactionParam().withTo(r.token).withData(data)
-        Seq(args)
-      }
-    // loopring
   }
-
-  implicit def functionToHex: PartialFunction[org.web3j.abi.datatypes.Function, String] = {
-    case f: org.web3j.abi.datatypes.Function ⇒
-      FunctionEncoder.encode(f)
-  }
-
-  def abiFunction(method: String)(owner: String): org.web3j.abi.datatypes.Function =
-    new org.web3j.abi.datatypes.Function(
-      method,
-      java.util.Arrays.asList(new Address(owner)),
-      new ArrayList()
-    )
 
 }
 
