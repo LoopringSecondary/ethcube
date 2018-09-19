@@ -59,8 +59,7 @@ class HttpConnector(node: EthereumProxySettings.Node)(implicit val materilizer: 
   private val poolClientFlow: Flow[(HttpRequest, Promise[HttpResponse]), (Try[HttpResponse], Promise[HttpResponse]), Http.HostConnectionPool] = {
     Http().cachedHostConnectionPool[Promise[HttpResponse]](
       host = node.host,
-      port = node.port
-    )
+      port = node.port)
   }
 
   log.info(s"connecting Ethereum at ${node.host}:${node.port}")
@@ -70,7 +69,7 @@ class HttpConnector(node: EthereumProxySettings.Node)(implicit val materilizer: 
       .via(poolClientFlow)
       .toMat(Sink.foreach({
         case (Success(resp), p) ⇒ p.success(resp)
-        case (Failure(e), p)    ⇒ p.failure(e)
+        case (Failure(e), p) ⇒ p.failure(e)
       }))(Keep.left).run()(materilizer)
 
   private def request(request: HttpRequest): Future[HttpResponse] = {
@@ -99,13 +98,10 @@ class HttpConnector(node: EthereumProxySettings.Node)(implicit val materilizer: 
   }
 
   private def sendMessage[T <: ProtoBuf[T]](
-    method: String
-  )(
-    params: Seq[Any]
-  )(
+    method: String)(
+    params: Seq[Any])(
     implicit
-    c: scalapb.GeneratedMessageCompanion[T]
-  ): Future[T] = {
+    c: scalapb.GeneratedMessageCompanion[T]): Future[T] = {
     val jsonRpc = JsonRpcReqWrapped(id = Random.nextInt(100), jsonrpc = "2.0", method = method, params = params)
     val resp = for {
       entity ← Marshal(jsonRpc).to[RequestEntity]
@@ -172,11 +168,14 @@ class HttpConnector(node: EthereumProxySettings.Node)(implicit val materilizer: 
       sendMessage[GetBlockTransactionCountRes]("eth_getBlockTransactionCountByHash") {
         Seq(r.blockHash)
       }
+    case r: EthCallReq ⇒
+      sendMessage[EthCallRes]("eth_call") {
+        Seq(r.param, r.tag)
+      }
   }
 
 }
 
 case class DebugParams(
-    timeout: String,
-    tracer: String
-)
+  timeout: String,
+  tracer: String)

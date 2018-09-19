@@ -169,6 +169,17 @@ message EthBlockNumberRes {
     string result = 3;
 }
 
+message EthCallReq {
+    TransactionParam param = 1;
+    string tag = 2;
+}
+
+message EthCallRes {
+    int32 id = 1;
+    string jsonrpc = 2;
+    string result = 3;
+}
+
 // eth_getBalance
 message EthGetBalanceReq {
     string address = 1;
