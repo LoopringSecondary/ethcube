@@ -30,7 +30,7 @@ import de.heikoseeberger.akkahttpjson4s.Json4sSupport
 import com.typesafe.config.Config
 import org.json4s._
 import org.loopring.ethcube.proto.data._
-import org.loopring.lightcone.proto.eth_jsonrpc._
+import org.loopring.ethcube.proto.eth_jsonrpc._
 import akka.stream.ActorMaterializer
 
 class LooprEthereumProxyEndpoints(ethereumProxy: ActorRef)(implicit
@@ -64,9 +64,14 @@ class LooprEthereumProxyEndpoints(ethereumProxy: ActorRef)(implicit
     "eth_getBlockWithTxHashByHash" -> routeContext[GetBlockWithTxHashByHashReq, GetBlockWithTxHashByHashRes],
     "eth_getBlockWithTxObjectByHash" -> routeContext[GetBlockWithTxObjectByHashReq, GetBlockWithTxObjectByHashRes],
     "debug_traceTransaction" -> routeContext[TraceTransactionReq, TraceTransactionRes],
+    "eth_sendRawTransaction" -> routeContext[SendRawTransactionReq, SendRawTransactionRes],
+    "eth_getTransactionCount" -> routeContext[GetNonceReq, GetNonceRes],
+    "eth_getBlockTransactionCountByHash" -> routeContext[GetBlockTransactionCountReq, GetBlockTransactionCountRes],
     "erc20_getBalance" -> routeContext[GetBalanceReq, GetBalanceRes],
     "erc20_getAllowance" -> routeContext[GetAllowanceReq, GetAllowanceRes],
-    "eth_sendRawTransaction" -> routeContext[SendRawTransactionReq, SendRawTransactionRes]
+    "erc20_getName" -> routeContext[GetTokenNameReq, GetTokenNameRes],
+    "erc20_getSymbol" -> routeContext[GetTokenSymbolReq, GetTokenSymbolRes],
+    "erc20_getDecimals" -> routeContext[GetDecimalsReq, GetDecimalsRes]
   )
 
   private def routeContext[P: Manifest, R: Manifest] = {
