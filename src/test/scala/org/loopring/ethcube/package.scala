@@ -33,7 +33,7 @@ package object accessor {
 
   implicit val system = ActorSystem("ethcube")
   implicit val materializer = ActorMaterializer()
-  implicit val timeout = Timeout(200 second)
+  implicit val timeout = Timeout(100 second)
 
   val connector = system.actorOf(Props(new HttpConnector(node)), "connector")
 }

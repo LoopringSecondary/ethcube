@@ -161,7 +161,7 @@ class HttpConnector(node: EthereumProxySettings.Node)(implicit val materilizer: 
     case r: GetEstimatedGasReq ⇒
       sendMessage[GetEstimatedGasRes]("eth_estimateGas") {
         val args = TransactionParam().withTo(r.to).withData(r.data)
-        Seq(args, r.tag)
+        Seq(args)
       }
     case r: GetNonceReq ⇒
       sendMessage[GetNonceRes]("eth_getTransactionCount") {
