@@ -31,12 +31,12 @@ import de.heikoseeberger.akkahttpjson4s.Json4sSupport
 import org.json4s._
 import org.loopring.ethcube.proto.data._
 import scalapb.json4s.JsonFormat
-import org.loopring.lightcone.proto.eth_jsonrpc._
+import org.loopring.ethcube.proto.eth_jsonrpc._
 import java.util.ArrayList
 import org.web3j.abi.datatypes.Address
 import org.web3j.abi.FunctionEncoder
 
-private class HttpConnector(node: EthereumProxySettings.Node)(implicit val materilizer: ActorMaterializer)
+class HttpConnector(node: EthereumProxySettings.Node)(implicit val materilizer: ActorMaterializer)
   extends Actor
   with ActorLogging
   with Json4sSupport {
@@ -50,8 +50,11 @@ private class HttpConnector(node: EthereumProxySettings.Node)(implicit val mater
   val DEBUG_TRACER = "callTracer"
   val ETH_CALL = "eth_call"
 
-  val ABI_BALANCEOF = "balanceOf"
-  val ABI_ALLOWANCE = "allowance"
+  val ABI_ERC20_BALANCEOF = "balanceOf"
+  val ABI_ERC20_ALLOWANCE = "allowance"
+  val ABI_ERC20_DECIMALS = "decimals"
+  val ABI_ERC20_NAME = "name"
+  val ABI_ERC20_SYMBOL = "symbol"
 
   private val poolClientFlow: Flow[(HttpRequest, Promise[HttpResponse]), (Try[HttpResponse], Promise[HttpResponse]), Http.HostConnectionPool] = {
     Http().cachedHostConnectionPool[Promise[HttpResponse]](
@@ -151,22 +154,55 @@ private class HttpConnector(node: EthereumProxySettings.Node)(implicit val mater
         val debugParams = DebugParams(DEBUG_TIMEOUT_STR, DEBUG_TRACER)
         Seq(r.txhash, debugParams)
       }
+    case r: SendRawTransactionReq ⇒
+      sendMessage[SendRawTransactionRes]("eth_sendRawTransaction") {
+        Seq(r.data)
+      }
+    case r: GetEstimatedGasReq ⇒
+      sendMessage[GetEstimatedGasRes]("eth_estimateGas") {
+        val args = TransactionParam().withTo(r.to).withData(r.data)
+        Seq(args, r.tag)
+      }
+    case r: GetNonceReq ⇒
+      sendMessage[GetNonceRes]("eth_getTransactionCount") {
+        Seq(r.owner, r.tag)
+      }
+    case r: GetBlockTransactionCountReq ⇒
+      sendMessage[GetBlockTransactionCountRes]("eth_getBlockTransactionCountByHash") {
+        Seq(r.blockHash)
+      }
+    // erc20
     case r: GetBalanceReq ⇒
       sendMessage[GetBalanceRes](ETH_CALL) {
-        val data = abiFunction(ABI_BALANCEOF)(r.owner)
+        val data = abiFunction(ABI_ERC20_BALANCEOF)(r.owner)
         val args = TransactionParam().withTo(r.token).withData(data)
         Seq(args, r.tag)
       }
     case r: GetAllowanceReq ⇒
       sendMessage[GetAllowanceRes](ETH_CALL) {
-        val data = abiFunction(ABI_ALLOWANCE)(r.owner)
+        val data = abiFunction(ABI_ERC20_ALLOWANCE)(r.owner)
         val args = TransactionParam().withTo(r.token).withData(data)
         Seq(args, r.tag)
       }
-    case r: SendRawTransactionReq ⇒
-      sendMessage[SendRawTransactionRes]("eth_sendRawTransaction") {
-        Seq(r.data)
+    case r: GetDecimalsReq ⇒
+      sendMessage[GetDecimalsRes](ETH_CALL) {
+        val data = abiFunction(ABI_ERC20_DECIMALS)("")
+        val args = TransactionParam().withTo(r.token).withData(data)
+        Seq(args)
       }
+    case r: GetTokenNameReq ⇒
+      sendMessage[GetTokenNameRes](ETH_CALL) {
+        val data = abiFunction(ABI_ERC20_NAME)("")
+        val args = TransactionParam().withTo(r.token).withData(data)
+        Seq(args)
+      }
+    case r: GetTokenSymbolReq ⇒
+      sendMessage[GetTokenSymbolRes](ETH_CALL) {
+        val data = abiFunction(ABI_ERC20_SYMBOL)("")
+        val args = TransactionParam().withTo(r.token).withData(data)
+        Seq(args)
+      }
+    // loopring
   }
 
   implicit def functionToHex: PartialFunction[org.web3j.abi.datatypes.Function, String] = {
