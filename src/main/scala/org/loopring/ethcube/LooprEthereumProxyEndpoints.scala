@@ -55,7 +55,7 @@ class LooprEthereumProxyEndpoints(ethereumProxy: ActorRef)(implicit
   }
 
   private val etherRoutingMap = Map[String, RequestContext ⇒ Future[RouteResult]](
-    "eth_blockNumber" -> routeContext[EthBlockNumberReq, EthBlockNumberRes],
+    "eth_blockNumber" -> ethBlockNumber,
     "eth_getBalance" -> routeContext[EthGetBalanceReq, EthGetBalanceRes],
     "eth_getTransactionByHash" -> routeContext[GetTransactionByHashReq, GetTransactionByHashRes],
     "eth_getTransactionReceipt" -> routeContext[GetTransactionReceiptReq, GetTransactionReceiptRes],
@@ -69,11 +69,27 @@ class LooprEthereumProxyEndpoints(ethereumProxy: ActorRef)(implicit
     "eth_sendRawTransaction" -> routeContext[SendRawTransactionReq, SendRawTransactionRes]
   )
 
-  private def routeContext[P: Manifest, R: Manifest] = {
+  private def ethBlockNumber = {
+    val f = (ethereumProxy ? EthBlockNumberReq()).mapTo[EthBlockNumberRes]
+    complete(f)
+  }
+
+  private def routeContext[P: Manifest, T <: ProtoBuf[_]: Manifest] = {
     entity(as[P]) { req ⇒
-      val f = (ethereumProxy ? req).mapTo[R]
+      // 直接mapTo不会自动转json
+      val f = (ethereumProxy ? req).mapTo[T].map(toResponse)
       complete(f)
     }
+  }
+
+  private def toResponse(t: ProtoBuf[_]): HttpResponse = {
+    HttpResponse(
+      StatusCodes.OK,
+      entity = HttpEntity(
+        ContentTypes.`application/json`,
+        JsonFormat.toJsonString(t)
+      )
+    )
   }
 
 }

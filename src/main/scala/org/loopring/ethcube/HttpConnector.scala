@@ -102,13 +102,13 @@ private class HttpConnector(node: EthereumProxySettings.Node)(implicit val mater
   )(
     implicit
     c: scalapb.GeneratedMessageCompanion[T]
-  ) = {
+  ): Future[T] = {
     val jsonRpc = JsonRpcReqWrapped(id = Random.nextInt(100), jsonrpc = "2.0", method = method, params = params)
     val resp = for {
       entity ← Marshal(jsonRpc).to[RequestEntity]
       jsonStr ← post(entity)
+      _ = println("jsonstr =>>>" + jsonStr)
     } yield JsonFormat.fromJsonString[T](jsonStr)
-
     resp pipeTo sender
   }
 
