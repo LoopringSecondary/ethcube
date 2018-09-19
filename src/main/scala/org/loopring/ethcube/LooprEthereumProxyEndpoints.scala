@@ -30,7 +30,7 @@ import de.heikoseeberger.akkahttpjson4s.Json4sSupport
 import com.typesafe.config.Config
 import org.json4s._
 import org.loopring.ethcube.proto.data._
-import org.loopring.lightcone.proto.eth_jsonrpc._
+import org.loopring.ethcube.proto.eth_jsonrpc._
 import akka.stream.ActorMaterializer
 
 class LooprEthereumProxyEndpoints(ethereumProxy: ActorRef)(implicit

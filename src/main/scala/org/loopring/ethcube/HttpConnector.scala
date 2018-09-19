@@ -31,7 +31,7 @@ import de.heikoseeberger.akkahttpjson4s.Json4sSupport
 import org.json4s._
 import org.loopring.ethcube.proto.data._
 import scalapb.json4s.JsonFormat
-import org.loopring.lightcone.proto.eth_jsonrpc._
+import org.loopring.ethcube.proto.eth_jsonrpc._
 import java.util.ArrayList
 import org.web3j.abi.datatypes.Address
 import org.web3j.abi.FunctionEncoder
