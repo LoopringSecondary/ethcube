@@ -36,7 +36,7 @@ import java.util.ArrayList
 import org.web3j.abi.datatypes.Address
 import org.web3j.abi.FunctionEncoder
 
-private class HttpConnector(node: EthereumProxySettings.Node)(implicit val materilizer: ActorMaterializer)
+class HttpConnector(node: EthereumProxySettings.Node)(implicit val materilizer: ActorMaterializer)
   extends Actor
   with ActorLogging
   with Json4sSupport {
