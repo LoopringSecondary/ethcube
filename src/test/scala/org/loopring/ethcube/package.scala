@@ -26,10 +26,7 @@ import scala.concurrent.duration._
 
 package object accessor {
 
-  val node = EthereumProxySettings.Node(
-    host = "127.0.0.1",
-    port = 8545
-  )
+  val node = EthereumProxySettings.Node(host = "192.168.0.200", port = 8545)
 
   implicit val system = ActorSystem("ethcube")
   implicit val materializer = ActorMaterializer()

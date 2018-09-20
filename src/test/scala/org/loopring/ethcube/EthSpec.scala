@@ -25,8 +25,12 @@ import org.loopring.ethcube.proto.eth_jsonrpc._
 
 import scala.concurrent.Await
 
-class EthSpec() extends TestKit(ActorSystem("MySpec")) with ImplicitSender
-  with WordSpecLike with Matchers with BeforeAndAfterAll {
+class EthSpec()
+  extends TestKit(ActorSystem("MySpec"))
+  with ImplicitSender
+  with WordSpecLike
+  with Matchers
+  with BeforeAndAfterAll {
 
   info("execute cmd [sbt ethcube/'testOnly *EthSpec'] to test all")
 
@@ -58,7 +62,9 @@ class EthSpec() extends TestKit(ActorSystem("MySpec")) with ImplicitSender
   "GetTransactionByHashReq" in {
     info("cmd [sbt ethcube/'testOnly *EthSpec -- -z GetTransactionByHashReq']")
 
-    val req = GetTransactionByHashReq("0x8bc1e170941db9c481e13aefe82f237dc3e18500550974a6bc43bacb6e0cc35b")
+    val req = GetTransactionByHashReq(
+      "0x8bc1e170941db9c481e13aefe82f237dc3e18500550974a6bc43bacb6e0cc35b"
+    )
     val resFuture = connector ? req
     val res = Await.result(resFuture, timeout.duration)
     info(res.toString)
@@ -67,7 +73,9 @@ class EthSpec() extends TestKit(ActorSystem("MySpec")) with ImplicitSender
   "GetTransactionReceiptReq" in {
     info("cmd [sbt ethcube/'testOnly *EthSpec -- -z GetTransactionReceiptReq']")
 
-    val req = GetTransactionReceiptReq("0x8bc1e170941db9c481e13aefe82f237dc3e18500550974a6bc43bacb6e0cc35b")
+    val req = GetTransactionReceiptReq(
+      "0x8bc1e170941db9c481e13aefe82f237dc3e18500550974a6bc43bacb6e0cc35b"
+    )
     val resFuture = connector ? req
     val res = Await.result(resFuture, timeout.duration)
     info(res.toString)
@@ -76,14 +84,18 @@ class EthSpec() extends TestKit(ActorSystem("MySpec")) with ImplicitSender
   "TraceTransactionReq" in {
     info("cmd [sbt ethcube/'testOnly *EthSpec -- -z TraceTransactionReq']")
 
-    val req = TraceTransactionReq("0x8bc1e170941db9c481e13aefe82f237dc3e18500550974a6bc43bacb6e0cc35b")
+    val req = TraceTransactionReq(
+      "0x8bc1e170941db9c481e13aefe82f237dc3e18500550974a6bc43bacb6e0cc35b"
+    )
     val resFuture = connector ? req
     val res = Await.result(resFuture, timeout.duration)
     info(res.toString)
   }
 
   "GetBlockWithTxHashByNumberReq" in {
-    info("cmd [sbt ethcube/'testOnly *EthSpec -- -z GetBlockWithTxHashByNumberReq']")
+    info(
+      "cmd [sbt ethcube/'testOnly *EthSpec -- -z GetBlockWithTxHashByNumberReq']"
+    )
 
     val blockNumber = "0x" + BigInt(43161).intValue().toHexString
     info(s"blockNumber is $blockNumber")
@@ -97,7 +109,8 @@ class EthSpec() extends TestKit(ActorSystem("MySpec")) with ImplicitSender
   "GetNonceReq" in {
     info("cmd [sbt ethcube/'testOnly *EthSpec -- -z GetNonceReq']")
 
-    val req = GetNonceReq("0xb1018949b241d76a1ab2094f473e9befeabb5ead", "pending")
+    val req =
+      GetNonceReq("0xb1018949b241d76a1ab2094f473e9befeabb5ead", "pending")
     val resFuture = connector ? req
     val res = Await.result(resFuture, timeout.duration)
     info(res.toString)
@@ -108,7 +121,8 @@ class EthSpec() extends TestKit(ActorSystem("MySpec")) with ImplicitSender
     info("cmd [sbt ethcube/'testOnly *EthSpec -- -z GetEstimatedGasReq']")
 
     val lrc = "0xcd36128815ebe0b44d0374649bad2721b8751bef"
-    val transfer = "0xa9059cbb000000000000000000000000b1018949b241d76a1ab2094f473e9befeabb5ead000000000000000000000000000000000000000000000878678326eac9000000"
+    val transfer =
+      "0xa9059cbb000000000000000000000000b1018949b241d76a1ab2094f473e9befeabb5ead000000000000000000000000000000000000000000000878678326eac9000000"
     val req = GetEstimatedGasReq(lrc, transfer)
     val resFuture = connector ? req
     val res = Await.result(resFuture, timeout.duration)
