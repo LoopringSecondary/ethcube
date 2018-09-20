@@ -33,18 +33,18 @@ import org.loopring.ethcube.proto.data._
 import scalapb.json4s.JsonFormat
 import org.loopring.ethcube.proto.eth_jsonrpc._
 import java.util.ArrayList
-import org.web3j.abi.datatypes.Address
-import org.web3j.abi.FunctionEncoder
 
-class HttpConnector(node: EthereumProxySettings.Node)(implicit val materilizer: ActorMaterializer)
-  extends Actor
+class HttpConnector(node: EthereumProxySettings.Node)(
+    implicit
+    val materilizer: ActorMaterializer
+) extends Actor
   with ActorLogging
   with Json4sSupport {
 
   import context.dispatcher
-  implicit val serialization = jackson.Serialization
+  implicit val serialization = jackson.Serialization //.formats(NoTypeHints)
   implicit val system: ActorSystem = context.system
-  implicit val formats = org.json4s.native.Serialization.formats(NoTypeHints)
+  implicit val formats = org.json4s.native.Serialization.formats(NoTypeHints) + new EmptyValueSerializer
 
   val DEBUG_TIMEOUT_STR = "5s"
   val DEBUG_TRACER = "callTracer"
@@ -59,18 +59,24 @@ class HttpConnector(node: EthereumProxySettings.Node)(implicit val materilizer: 
   private val poolClientFlow: Flow[(HttpRequest, Promise[HttpResponse]), (Try[HttpResponse], Promise[HttpResponse]), Http.HostConnectionPool] = {
     Http().cachedHostConnectionPool[Promise[HttpResponse]](
       host = node.host,
-      port = node.port)
+      port = node.port
+    )
   }
 
   log.info(s"connecting Ethereum at ${node.host}:${node.port}")
 
   private val queue: SourceQueueWithComplete[(HttpRequest, Promise[HttpResponse])] =
-    Source.queue[(HttpRequest, Promise[HttpResponse])](100, OverflowStrategy.backpressure)
+    Source
+      .queue[(HttpRequest, Promise[HttpResponse])](
+        100,
+        OverflowStrategy.backpressure
+      )
       .via(poolClientFlow)
       .toMat(Sink.foreach({
         case (Success(resp), p) ⇒ p.success(resp)
-        case (Failure(e), p) ⇒ p.failure(e)
-      }))(Keep.left).run()(materilizer)
+        case (Failure(e), p)    ⇒ p.failure(e)
+      }))(Keep.left)
+      .run()(materilizer)
 
   private def request(request: HttpRequest): Future[HttpResponse] = {
     val responsePromise = Promise[HttpResponse]()
@@ -92,22 +98,28 @@ class HttpConnector(node: EthereumProxySettings.Node)(implicit val materilizer: 
 
   private def post(entity: RequestEntity): Future[String] = {
     for {
-      httpResp ← request(HttpRequest(method = HttpMethods.POST, entity = entity))
+      httpResp ← request(
+        HttpRequest(method = HttpMethods.POST, entity = entity)
+      )
       jsonStr ← httpResp.entity.dataBytes.map(_.utf8String).runReduce(_ + _)
     } yield jsonStr
   }
 
-  private def sendMessage[T <: ProtoBuf[T]](
-    method: String)(
-    params: Seq[Any])(
+  private def sendMessage[T <: ProtoBuf[T]](method: String)(params: Seq[Any])(
     implicit
-    c: scalapb.GeneratedMessageCompanion[T]): Future[T] = {
-    val jsonRpc = JsonRpcReqWrapped(id = Random.nextInt(100), jsonrpc = "2.0", method = method, params = params)
+    c: scalapb.GeneratedMessageCompanion[T]
+  ): Future[T] = {
+    val jsonRpc = JsonRpcReqWrapped(
+      id = Random.nextInt(100),
+      jsonrpc = "2.0",
+      method = method,
+      params = params
+    )
+    log.info(s"reqeust: ${org.json4s.native.Serialization.write(jsonRpc)}")
     val resp = for {
       entity ← Marshal(jsonRpc).to[RequestEntity]
       jsonStr ← post(entity)
       _ = log.info(s"response: $jsonStr")
-      // _ = println("jsonstr =>>>" + jsonStr)
     } yield JsonFormat.fromJsonString[T](jsonStr)
     resp pipeTo sender
   }
@@ -165,9 +177,11 @@ class HttpConnector(node: EthereumProxySettings.Node)(implicit val materilizer: 
         Seq(r.owner, r.tag)
       }
     case r: GetBlockTransactionCountReq ⇒
-      sendMessage[GetBlockTransactionCountRes]("eth_getBlockTransactionCountByHash") {
-        Seq(r.blockHash)
-      }
+      sendMessage[GetBlockTransactionCountRes](
+        "eth_getBlockTransactionCountByHash"
+      ) {
+          Seq(r.blockHash)
+        }
     case r: EthCallReq ⇒
       sendMessage[EthCallRes]("eth_call") {
         Seq(r.param, r.tag)
@@ -176,6 +190,14 @@ class HttpConnector(node: EthereumProxySettings.Node)(implicit val materilizer: 
 
 }
 
-case class DebugParams(
-  timeout: String,
-  tracer: String)
+case class DebugParams(timeout: String, tracer: String)
+
+class EmptyValueSerializer
+  extends CustomSerializer[String](
+    _ ⇒
+      ({
+        case JNull ⇒ ""
+      }, {
+        case "" ⇒ JNothing
+      })
+  )
