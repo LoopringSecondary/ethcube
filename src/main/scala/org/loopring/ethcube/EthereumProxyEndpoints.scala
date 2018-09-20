@@ -19,7 +19,6 @@ package org.loopring.ethcube
 import akka.pattern.{ ask, pipe }
 import akka.util.Timeout
 import akka.actor._
-import akka.cluster._
 import akka.http.scaladsl.Http
 import akka.event.Logging
 import akka.http.scaladsl.model._
@@ -44,11 +43,11 @@ object EthereumProxyEndpoints {
   }
 }
 
-class EthereumProxyEndpoints(ethereumProxy: ActorRef)(implicit
+class EthereumProxyEndpoints(ethereumProxy: ActorRef)(
+    implicit
     system: ActorSystem,
     materializer: ActorMaterializer
-)
-  extends Json4sSupport {
+) extends Json4sSupport {
 
   implicit val context = system.dispatcher
   implicit val serialization = jackson.Serialization
@@ -62,7 +61,8 @@ class EthereumProxyEndpoints(ethereumProxy: ActorRef)(implicit
 
   def getRoutes(): Route = {
     val exceptionHandler = ExceptionHandler {
-      case e: AskTimeoutException ⇒ complete(errorResponse("Timeout or Has no routee"))
+      case e: AskTimeoutException ⇒
+        complete(errorResponse("Timeout or Has no routee"))
       case e: Throwable ⇒
         log.error(e, "error: ")
         complete(errorResponse(e.getMessage))
@@ -75,7 +75,8 @@ class EthereumProxyEndpoints(ethereumProxy: ActorRef)(implicit
   private lazy val route = pathEndOrSingleSlash {
     post {
       entity(as[JsonRpcReqWrapped]) { req ⇒
-        val f = (ethereumProxy ? req.toPB).mapTo[JsonRpcRes].map(toJsonRpcResWrapped)
+        val f =
+          (ethereumProxy ? req.toPB).mapTo[JsonRpcRes].map(toJsonRpcResWrapped)
         complete(f)
       }
     }
@@ -87,8 +88,12 @@ class EthereumProxyEndpoints(ethereumProxy: ActorRef)(implicit
         // requests/responses require : [{}, {}]
         entity(as[Seq[JsonRpcReqWrapped]]) { reqs ⇒
           val f = Future.sequence(
-            reqs.map(r ⇒ (ethereumProxy ? r.toPB).mapTo[JsonRpcRes]
-              .map(toJsonRpcResWrapped))
+            reqs.map(
+              r ⇒
+                (ethereumProxy ? r.toPB)
+                  .mapTo[JsonRpcRes]
+                  .map(toJsonRpcResWrapped)
+            )
           )
 
           complete(f)
@@ -102,7 +107,10 @@ class EthereumProxyEndpoints(ethereumProxy: ActorRef)(implicit
       StatusCodes.InternalServerError,
       entity = HttpEntity(
         ContentTypes.`application/json`,
-        s"""{"jsonrpc":"2.0", "error": {"code": 500, "message": "${msg.replaceAll("\"", "\\\"")}"}}"""
+        s"""{"jsonrpc":"2.0", "error": {"code": 500, "message": "${
+          msg
+            .replaceAll("\"", "\\\"")
+        }"}}"""
       )
     )
   }

@@ -23,14 +23,24 @@ import org.json4s.NoTypeHints
 import org.json4s.native.JsonMethods._
 import org.json4s.DefaultFormats
 
-case class JsonRpcReqWrapped(id: Int, jsonrpc: String = "2.0", method: String, params: Any) { self ⇒
+case class JsonRpcReqWrapped(
+    id: Int,
+    jsonrpc: String = "2.0",
+    method: String,
+    params: Any
+) { self ⇒
   implicit val formats = Serialization.formats(NoTypeHints)
   def toPB: JsonRpcReq = {
     JsonRpcReq(write(self))
   }
 }
 
-case class JsonRpcResWrapped(id: Any, jsonrpc: String = "2.0", result: Any, error: Option[JsonRpcErr])
+case class JsonRpcResWrapped(
+    id: Any,
+    jsonrpc: String = "2.0",
+    result: Any,
+    error: Option[JsonRpcErr]
+)
 
 object JsonRpcResWrapped {
 
@@ -40,4 +50,3 @@ object JsonRpcResWrapped {
     case j: JsonRpcRes ⇒ parse(j.json).extract[JsonRpcResWrapped]
   }
 }
-

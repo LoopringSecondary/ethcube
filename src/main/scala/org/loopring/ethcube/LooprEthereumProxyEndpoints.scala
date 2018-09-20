@@ -33,11 +33,11 @@ import org.loopring.ethcube.proto.data._
 import org.loopring.ethcube.proto.eth_jsonrpc._
 import akka.stream.ActorMaterializer
 
-class LooprEthereumProxyEndpoints(ethereumProxy: ActorRef)(implicit
+class LooprEthereumProxyEndpoints(ethereumProxy: ActorRef)(
+    implicit
     system: ActorSystem,
     materializer: ActorMaterializer
-)
-  extends Json4sSupport {
+) extends Json4sSupport {
 
   implicit val context = system.dispatcher
   implicit val serialization = jackson.Serialization
@@ -54,21 +54,22 @@ class LooprEthereumProxyEndpoints(ethereumProxy: ActorRef)(implicit
     concat(listing.toList: _*)(ctx)
   }
 
-  private val etherRoutingMap = Map[String, RequestContext ⇒ Future[RouteResult]](
-    "eth_blockNumber" -> ethBlockNumber,
-    "eth_getBalance" -> routeContext[EthGetBalanceReq, EthGetBalanceRes],
-    "eth_getTransactionByHash" -> routeContext[GetTransactionByHashReq, GetTransactionByHashRes],
-    "eth_getTransactionReceipt" -> routeContext[GetTransactionReceiptReq, GetTransactionReceiptRes],
-    "eth_getBlockWithTxHashByNumber" -> routeContext[GetBlockWithTxHashByNumberReq, GetBlockWithTxHashByNumberRes],
-    "eth_getBlockWithTxObjectByNumber" -> routeContext[GetBlockWithTxObjectByNumberReq, GetBlockWithTxObjectByNumberRes],
-    "eth_getBlockWithTxHashByHash" -> routeContext[GetBlockWithTxHashByHashReq, GetBlockWithTxHashByHashRes],
-    "eth_getBlockWithTxObjectByHash" -> routeContext[GetBlockWithTxObjectByHashReq, GetBlockWithTxObjectByHashRes],
-    "debug_traceTransaction" -> routeContext[TraceTransactionReq, TraceTransactionRes],
-    "eth_sendRawTransaction" -> routeContext[SendRawTransactionReq, SendRawTransactionRes],
-    "eth_getTransactionCount" -> routeContext[GetNonceReq, GetNonceRes],
-    "eth_getBlockTransactionCountByHash" -> routeContext[GetBlockTransactionCountReq, GetBlockTransactionCountRes],
-    "eth_call" -> routeContext[EthCallReq, EthCallRes]
-  )
+  private val etherRoutingMap =
+    Map[String, RequestContext ⇒ Future[RouteResult]](
+      "eth_blockNumber" -> ethBlockNumber,
+      "eth_getBalance" -> routeContext[EthGetBalanceReq, EthGetBalanceRes],
+      "eth_getTransactionByHash" -> routeContext[GetTransactionByHashReq, GetTransactionByHashRes],
+      "eth_getTransactionReceipt" -> routeContext[GetTransactionReceiptReq, GetTransactionReceiptRes],
+      "eth_getBlockWithTxHashByNumber" -> routeContext[GetBlockWithTxHashByNumberReq, GetBlockWithTxHashByNumberRes],
+      "eth_getBlockWithTxObjectByNumber" -> routeContext[GetBlockWithTxObjectByNumberReq, GetBlockWithTxObjectByNumberRes],
+      "eth_getBlockWithTxHashByHash" -> routeContext[GetBlockWithTxHashByHashReq, GetBlockWithTxHashByHashRes],
+      "eth_getBlockWithTxObjectByHash" -> routeContext[GetBlockWithTxObjectByHashReq, GetBlockWithTxObjectByHashRes],
+      "debug_traceTransaction" -> routeContext[TraceTransactionReq, TraceTransactionRes],
+      "eth_sendRawTransaction" -> routeContext[SendRawTransactionReq, SendRawTransactionRes],
+      "eth_getTransactionCount" -> routeContext[GetNonceReq, GetNonceRes],
+      "eth_getBlockTransactionCountByHash" -> routeContext[GetBlockTransactionCountReq, GetBlockTransactionCountRes],
+      "eth_call" -> routeContext[EthCallReq, EthCallRes]
+    )
 
   private def ethBlockNumber = {
     val f = (ethereumProxy ? EthBlockNumberReq()).mapTo[EthBlockNumberRes]
@@ -86,10 +87,8 @@ class LooprEthereumProxyEndpoints(ethereumProxy: ActorRef)(implicit
   private def toResponse(t: ProtoBuf[_]): HttpResponse = {
     HttpResponse(
       StatusCodes.OK,
-      entity = HttpEntity(
-        ContentTypes.`application/json`,
-        JsonFormat.toJsonString(t)
-      )
+      entity =
+        HttpEntity(ContentTypes.`application/json`, JsonFormat.toJsonString(t))
     )
   }
 

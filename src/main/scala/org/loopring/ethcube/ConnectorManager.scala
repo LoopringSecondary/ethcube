@@ -34,14 +34,16 @@ private class ConnectionManager(
     checkIntervalSeconds: Int,
     healthyThreshold: Float
 )
-  extends Actor with ActorLogging {
+  extends Actor
+  with ActorLogging {
 
   implicit val ec = context.system.dispatcher
   implicit val timeout: Timeout = Timeout(1 seconds)
   private val size = connectorGroups.size
   implicit val formats = DefaultFormats
 
-  private val errCheckBlockHeightResp = CheckBlockHeightResp(currentBlock = 1, heightBlock = 0)
+  private val errCheckBlockHeightResp =
+    CheckBlockHeightResp(currentBlock = 1, heightBlock = 0)
 
   context.system.scheduler.schedule(
     checkIntervalSeconds.seconds,
@@ -66,36 +68,67 @@ private class ConnectionManager(
 
     case m: CheckBlockHeight ⇒
       log.info("start scheduler check highest block...")
-      val syncingJsonRpcReq = JsonRpcReqWrapped(id = Random.nextInt(100), jsonrpc = "2.0", method = "eth_syncing", params = None)
-      val blockNumJsonRpcReq = JsonRpcReqWrapped(id = Random.nextInt(100), jsonrpc = "2.0", method = "eth_blockNumber", params = None)
+      val syncingJsonRpcReq = JsonRpcReqWrapped(
+        id = Random.nextInt(100),
+        jsonrpc = "2.0",
+        method = "eth_syncing",
+        params = None
+      )
+      val blockNumJsonRpcReq = JsonRpcReqWrapped(
+        id = Random.nextInt(100),
+        jsonrpc = "2.0",
+        method = "eth_blockNumber",
+        params = None
+      )
       import JsonRpcResWrapped._
       for {
-        resps: Seq[(ActorRef, CheckBlockHeightResp)] ← Future.sequence(connectorGroups.map {
-          g ⇒
+        resps: Seq[(ActorRef, CheckBlockHeightResp)] ← Future.sequence(
+          connectorGroups.map { g ⇒
             for {
-              syncingResp ← (g ? syncingJsonRpcReq.toPB).mapTo[JsonRpcRes]
-                .map(toJsonRpcResWrapped).map(_.result).map(toCheckBlockHeightResp).recover {
+              syncingResp ← (g ? syncingJsonRpcReq.toPB)
+                .mapTo[JsonRpcRes]
+                .map(toJsonRpcResWrapped)
+                .map(_.result)
+                .map(toCheckBlockHeightResp)
+                .recover {
                   case e: TimeoutException ⇒
-                    log.error(s"timeout on getting blockheight: $g: ${e.getMessage}")
+                    log.error(
+                      s"timeout on getting blockheight: $g: ${e.getMessage}"
+                    )
                     errCheckBlockHeightResp
                   case e: Throwable ⇒
-                    log.error(s"exception on getting blockheight: $g: ${e.getMessage}")
+                    log.error(
+                      s"exception on getting blockheight: $g: ${e.getMessage}"
+                    )
                     errCheckBlockHeightResp
                 }
               // get each node block number
-              blockNumResp ← (g ? blockNumJsonRpcReq.toPB).mapTo[JsonRpcRes].map(toJsonRpcResWrapped).map(_.result).map(anyHexToInt)
+              blockNumResp ← (g ? blockNumJsonRpcReq.toPB)
+                .mapTo[JsonRpcRes]
+                .map(toJsonRpcResWrapped)
+                .map(_.result)
+                .map(anyHexToInt)
               // heightBlcok = if(!syncing) currentBlock else syncing['height_block']
             } yield {
               val heightBlock = Seq(syncingResp.heightBlock, blockNumResp).max
-              log.info(s"{ currentBlock: ${blockNumResp}, highestBlock: ${heightBlock} } @ ${g.path}")
-              (g, syncingResp.copy(currentBlock = blockNumResp, heightBlock = heightBlock))
+              log.info(
+                s"{ currentBlock: ${blockNumResp}, highestBlock: ${heightBlock} } @ ${g.path}"
+              )
+              (
+                g,
+                syncingResp
+                .copy(currentBlock = blockNumResp, heightBlock = heightBlock)
+              )
             }
-        })
+          }
+        )
         heightBNInGroup = resps.map(_._2.heightBlock).max
-        goodGroupsOption = Seq(10, 20, 30).map { i ⇒
-          // 计算最高块和当前块的差距
-          resps.filter(x ⇒ heightBNInGroup - x._2.currentBlock <= i).map(_._1)
-        }.find(_.size >= size * healthyThreshold)
+        goodGroupsOption = Seq(10, 20, 30)
+          .map { i ⇒
+            // 计算最高块和当前块的差距
+            resps.filter(x ⇒ heightBNInGroup - x._2.currentBlock <= i).map(_._1)
+          }
+          .find(_.size >= size * healthyThreshold)
       } yield {
         // remove all routees
         connectorGroups.foreach { g ⇒
@@ -111,18 +144,23 @@ private class ConnectionManager(
           }
         }
 
-        log.info(s"GoodGroups: ${goodGroupsOption.map(_.size).getOrElse(0)} connectorGroup are still in good shape, " +
-          s"in connectorGroup height block number: ${heightBNInGroup}, end scheduler")
+        log.info(
+          s"GoodGroups: ${goodGroupsOption.map(_.size).getOrElse(0)} connectorGroup are still in good shape, " +
+            s"in connectorGroup height block number: ${heightBNInGroup}, end scheduler"
+        )
       }
   }
 
   def toCheckBlockHeightResp: PartialFunction[Any, CheckBlockHeightResp] = {
     case m: Map[_, _] ⇒
-      val currentBlock = m.find(_._1 == "currentBlock").map(_._2).map(anyHexToInt).getOrElse(0)
-      val heightBlock = m.find(_._1 == "highestBlock").map(_._2).map(anyHexToInt).getOrElse(10)
+      val currentBlock =
+        m.find(_._1 == "currentBlock").map(_._2).map(anyHexToInt).getOrElse(0)
+      val heightBlock =
+        m.find(_._1 == "highestBlock").map(_._2).map(anyHexToInt).getOrElse(10)
       CheckBlockHeightResp(currentBlock, heightBlock)
-    case b: Boolean ⇒ if (b) errCheckBlockHeightResp else CheckBlockHeightResp(1, 10)
-    case _          ⇒ errCheckBlockHeightResp
+    case b: Boolean ⇒
+      if (b) errCheckBlockHeightResp else CheckBlockHeightResp(1, 10)
+    case _ ⇒ errCheckBlockHeightResp
   }
 
   def anyHexToInt: PartialFunction[Any, Int] = {
