@@ -34,9 +34,9 @@ import org.loopring.ethcube.proto.eth_jsonrpc._
 import akka.stream.ActorMaterializer
 
 class LooprEthereumProxyEndpoints(ethereumProxy: ActorRef)(
-    implicit
-    system: ActorSystem,
-    materializer: ActorMaterializer
+  implicit
+  system: ActorSystem,
+  materializer: ActorMaterializer
 ) extends Json4sSupport {
 
   implicit val context = system.dispatcher
@@ -48,7 +48,9 @@ class LooprEthereumProxyEndpoints(ethereumProxy: ActorRef)(
     val listing = etherRoutingMap.map {
       case (segment, route) ⇒
         path(segment) {
-          post { route }
+          post {
+            route
+          }
         }
     }
     concat(listing.toList: _*)(ctx)
@@ -68,7 +70,9 @@ class LooprEthereumProxyEndpoints(ethereumProxy: ActorRef)(
       "eth_sendRawTransaction" -> routeContext[SendRawTransactionReq, SendRawTransactionRes],
       "eth_getTransactionCount" -> routeContext[GetNonceReq, GetNonceRes],
       "eth_getBlockTransactionCountByHash" -> routeContext[GetBlockTransactionCountReq, GetBlockTransactionCountRes],
-      "eth_call" -> routeContext[EthCallReq, EthCallRes]
+      "eth_call" -> routeContext[EthCallReq, EthCallRes],
+      "eth_estimateGas" -> routeContext[GetEstimatedGasReq, GetEstimatedGasRes],
+      "eth_getNonce" -> routeContext[GetNonceReq, GetNonceRes]
     )
 
   private def ethBlockNumber = {
@@ -76,7 +80,7 @@ class LooprEthereumProxyEndpoints(ethereumProxy: ActorRef)(
     complete(f)
   }
 
-  private def routeContext[P: Manifest, T <: ProtoBuf[_]: Manifest] = {
+  private def routeContext[P: Manifest, T <: ProtoBuf[_] : Manifest] = {
     entity(as[P]) { req ⇒
       // 直接mapTo不会自动转json
       val f = (ethereumProxy ? req).mapTo[T].map(toResponse)
