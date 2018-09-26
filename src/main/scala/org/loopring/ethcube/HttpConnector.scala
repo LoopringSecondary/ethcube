@@ -51,12 +51,6 @@ class HttpConnector(node: EthereumProxySettings.Node)(
   val DEBUG_TRACER = "callTracer"
   val ETH_CALL = "eth_call"
 
-  val ABI_ERC20_BALANCEOF = "balanceOf"
-  val ABI_ERC20_ALLOWANCE = "allowance"
-  val ABI_ERC20_DECIMALS = "decimals"
-  val ABI_ERC20_NAME = "name"
-  val ABI_ERC20_SYMBOL = "symbol"
-
   private val poolClientFlow: Flow[(HttpRequest, Promise[HttpResponse]), (Try[HttpResponse], Promise[HttpResponse]), Http.HostConnectionPool] = {
     Http().cachedHostConnectionPool[Promise[HttpResponse]](
       host = node.host,
