@@ -35,13 +35,14 @@ import org.loopring.ethcube.proto.eth_jsonrpc._
 import java.util.ArrayList
 
 class HttpConnector(node: EthereumProxySettings.Node)(
-    implicit
-    val materilizer: ActorMaterializer
+  implicit
+  val materilizer: ActorMaterializer
 ) extends Actor
   with ActorLogging
   with Json4sSupport {
 
   import context.dispatcher
+
   implicit val serialization = jackson.Serialization //.formats(NoTypeHints)
   implicit val system: ActorSystem = context.system
   implicit val formats = org.json4s.native.Serialization.formats(NoTypeHints) + new EmptyValueSerializer
@@ -68,13 +69,13 @@ class HttpConnector(node: EthereumProxySettings.Node)(
   private val queue: SourceQueueWithComplete[(HttpRequest, Promise[HttpResponse])] =
     Source
       .queue[(HttpRequest, Promise[HttpResponse])](
-        100,
-        OverflowStrategy.backpressure
-      )
+      100,
+      OverflowStrategy.backpressure
+    )
       .via(poolClientFlow)
       .toMat(Sink.foreach({
         case (Success(resp), p) ⇒ p.success(resp)
-        case (Failure(e), p)    ⇒ p.failure(e)
+        case (Failure(e), p) ⇒ p.failure(e)
       }))(Keep.left)
       .run()(materilizer)
 
@@ -180,8 +181,8 @@ class HttpConnector(node: EthereumProxySettings.Node)(
       sendMessage[GetBlockTransactionCountRes](
         "eth_getBlockTransactionCountByHash"
       ) {
-          Seq(r.blockHash)
-        }
+        Seq(r.blockHash)
+      }
     case r: EthCallReq ⇒
       sendMessage[EthCallRes]("eth_call") {
         Seq(r.param, r.tag)
@@ -195,7 +196,7 @@ case class DebugParams(timeout: String, tracer: String)
 class EmptyValueSerializer
   extends CustomSerializer[String](
     _ ⇒
-      ({
+      ( {
         case JNull ⇒ ""
       }, {
         case "" ⇒ JNothing
