@@ -132,7 +132,7 @@ private class ConnectionManager(
       } yield {
         // remove all routees
         connectorGroups.foreach { g ⇒
-          val r = ActorSelectionRoutee(context.actorSelection(g.path))
+          // val r = ActorSelectionRoutee(context.actorSelection(g.path))
           requestRouterActor ! RemoveRoutee(ActorRefRoutee(g))
         }
         // only add Some(routee)

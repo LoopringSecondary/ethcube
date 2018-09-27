@@ -19,24 +19,21 @@ package org.loopring.ethcube
 import scala.util._
 import scala.concurrent._
 import akka.actor._
-import akka.routing._
 import akka.stream._
 import akka.http.scaladsl.model._
 import akka.http.scaladsl._
 import akka.stream.scaladsl._
 import akka.pattern.pipe
 import akka.http.scaladsl.marshalling.Marshal
-import akka.http.scaladsl.unmarshalling.Unmarshal
 import de.heikoseeberger.akkahttpjson4s.Json4sSupport
 import org.json4s._
 import org.loopring.ethcube.proto.data._
 import scalapb.json4s.JsonFormat
 import org.loopring.ethcube.proto.eth_jsonrpc._
-import java.util.ArrayList
 
 class HttpConnector(node: EthereumProxySettings.Node)(
-  implicit
-  val materilizer: ActorMaterializer
+    implicit
+    val materilizer: ActorMaterializer
 ) extends Actor
   with ActorLogging
   with Json4sSupport {
@@ -63,13 +60,13 @@ class HttpConnector(node: EthereumProxySettings.Node)(
   private val queue: SourceQueueWithComplete[(HttpRequest, Promise[HttpResponse])] =
     Source
       .queue[(HttpRequest, Promise[HttpResponse])](
-      100,
-      OverflowStrategy.backpressure
-    )
+        100,
+        OverflowStrategy.backpressure
+      )
       .via(poolClientFlow)
       .toMat(Sink.foreach({
         case (Success(resp), p) ⇒ p.success(resp)
-        case (Failure(e), p) ⇒ p.failure(e)
+        case (Failure(e), p)    ⇒ p.failure(e)
       }))(Keep.left)
       .run()(materilizer)
 
@@ -175,8 +172,8 @@ class HttpConnector(node: EthereumProxySettings.Node)(
       sendMessage[GetBlockTransactionCountRes](
         "eth_getBlockTransactionCountByHash"
       ) {
-        Seq(r.blockHash)
-      }
+          Seq(r.blockHash)
+        }
     case r: EthCallReq ⇒
       sendMessage[EthCallRes]("eth_call") {
         Seq(r.param, r.tag)
@@ -190,7 +187,7 @@ case class DebugParams(timeout: String, tracer: String)
 class EmptyValueSerializer
   extends CustomSerializer[String](
     _ ⇒
-      ( {
+      ({
         case JNull ⇒ ""
       }, {
         case "" ⇒ JNothing

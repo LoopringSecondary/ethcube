@@ -34,9 +34,8 @@ import org.loopring.ethcube.proto.eth_jsonrpc._
 import akka.stream.ActorMaterializer
 
 class LooprEthereumProxyEndpoints(ethereumProxy: ActorRef)(
-  implicit
-  system: ActorSystem,
-  materializer: ActorMaterializer
+    implicit
+    system: ActorSystem
 ) extends Json4sSupport {
 
   implicit val context = system.dispatcher
@@ -80,7 +79,7 @@ class LooprEthereumProxyEndpoints(ethereumProxy: ActorRef)(
     complete(f)
   }
 
-  private def routeContext[P: Manifest, T <: ProtoBuf[_] : Manifest] = {
+  private def routeContext[P: Manifest, T <: ProtoBuf[_]: Manifest] = {
     entity(as[P]) { req ⇒
       // 直接mapTo不会自动转json
       val f = (ethereumProxy ? req).mapTo[T].map(toResponse)

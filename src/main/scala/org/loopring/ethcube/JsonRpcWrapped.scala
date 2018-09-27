@@ -28,8 +28,10 @@ case class JsonRpcReqWrapped(
     jsonrpc: String = "2.0",
     method: String,
     params: Any
-) { self ⇒
+) {
+  self ⇒
   implicit val formats = Serialization.formats(NoTypeHints)
+
   def toPB: JsonRpcReq = {
     JsonRpcReq(write(self))
   }

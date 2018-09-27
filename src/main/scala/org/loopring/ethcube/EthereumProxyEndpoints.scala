@@ -39,14 +39,14 @@ import org.loopring.ethcube.proto.data._
 object EthereumProxyEndpoints {
   implicit val logSource: LogSource[AnyRef] = new LogSource[AnyRef] {
     def genString(o: AnyRef): String = o.getClass.getName
+
     override def getClazz(o: AnyRef): Class[_] = o.getClass
   }
 }
 
 class EthereumProxyEndpoints(ethereumProxy: ActorRef)(
     implicit
-    system: ActorSystem,
-    materializer: ActorMaterializer
+    system: ActorSystem
 ) extends Json4sSupport {
 
   implicit val context = system.dispatcher

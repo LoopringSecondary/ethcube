@@ -26,6 +26,7 @@ import org.slf4j.LoggerFactory
 object Main extends App {
 
   import collection.JavaConverters._
+
   lazy val log = LoggerFactory.getLogger(getClass)
 
   val config = ConfigFactory.load()
