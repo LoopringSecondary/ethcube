@@ -28,7 +28,7 @@ import org.json4s.native.JsonMethods._
 import org.json4s.DefaultFormats
 import javax.swing.Spring.HeightSpring
 
-private class ConnectionManager(
+private[ethcube] class ConnectionManager(
     requestRouterActor: ActorRef,
     connectorGroups: Seq[ActorRef],
     checkIntervalSeconds: Int,
@@ -55,14 +55,14 @@ private class ConnectionManager(
   /** updated date: 2018-9-12 by Toan
    *
    *  1、google.protobuf.Any 在序列化和反序列化 是需要对 Any 内部的 typeUrl 和 value字段进行处理
-   *  	暂时没找到合适的处理方式
+   *  暂时没找到合适的处理方式
    *  link (https://github.com/scalapb/ScalaPB/blob/master/third_party/google/protobuf/any.proto)
    *
    *  2、修改了判断块高的逻辑, 当geth/parity完全同步的时候 返回的 result=false
-   *  	TODO(Toan) 如果这里面要想获取 当前块 应该配合 eth_blockNumber
+   *  TODO(Toan) 如果这里面要想获取 当前块 应该配合 eth_blockNumber
    *
    *  3、把环形路由变成actor, 这样可以对路由actor发送消息
-   *  	link (https://doc.akka.io/docs/akka/current/routing.html#management-messages)
+   *  link (https://doc.akka.io/docs/akka/current/routing.html#management-messages)
    */
   def receive: Receive = {
 

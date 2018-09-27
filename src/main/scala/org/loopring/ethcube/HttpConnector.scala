@@ -31,7 +31,7 @@ import org.loopring.ethcube.proto.data._
 import scalapb.json4s.JsonFormat
 import org.loopring.ethcube.proto.eth_jsonrpc._
 
-class HttpConnector(node: EthereumProxySettings.Node)(
+private[ethcube] class HttpConnector(node: EthereumProxySettings.Node)(
     implicit
     val materilizer: ActorMaterializer
 ) extends Actor
@@ -182,9 +182,9 @@ class HttpConnector(node: EthereumProxySettings.Node)(
 
 }
 
-case class DebugParams(timeout: String, tracer: String)
+private case class DebugParams(timeout: String, tracer: String)
 
-class EmptyValueSerializer
+private class EmptyValueSerializer
   extends CustomSerializer[String](
     _ ⇒
       ({

@@ -23,7 +23,7 @@ import org.json4s.NoTypeHints
 import org.json4s.native.JsonMethods._
 import org.json4s.DefaultFormats
 
-case class JsonRpcReqWrapped(
+private[ethcube] case class JsonRpcReqWrapped(
     id: Int,
     jsonrpc: String = "2.0",
     method: String,
@@ -37,14 +37,14 @@ case class JsonRpcReqWrapped(
   }
 }
 
-case class JsonRpcResWrapped(
+private[ethcube] case class JsonRpcResWrapped(
     id: Any,
     jsonrpc: String = "2.0",
     result: Any,
     error: Option[JsonRpcErr]
 )
 
-object JsonRpcResWrapped {
+private[ethcube] object JsonRpcResWrapped {
 
   implicit val formats = DefaultFormats
 
