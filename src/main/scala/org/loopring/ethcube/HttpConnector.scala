@@ -109,14 +109,11 @@ private[ethcube] class HttpConnector(node: EthereumProxySettings.Node)(
       params = params
     )
     log.info(s"reqeust: ${org.json4s.native.Serialization.write(jsonRpc)}")
-
     val resp = for {
       entity ← Marshal(jsonRpc).to[RequestEntity]
       jsonStr ← post(entity)
       _ = log.info(s"response: $jsonStr")
-      res = JsonFormat.fromJsonString[T](jsonStr)
-    } yield res
-
+    } yield JsonFormat.fromJsonString[T](jsonStr)
     resp pipeTo sender
   }
 
