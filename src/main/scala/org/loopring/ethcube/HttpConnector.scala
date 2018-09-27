@@ -47,6 +47,7 @@ private[ethcube] class HttpConnector(node: EthereumProxySettings.Node)(
   val DEBUG_TIMEOUT_STR = "5s"
   val DEBUG_TRACER = "callTracer"
   val ETH_CALL = "eth_call"
+  val RETRY_MAX = 5
 
   private val poolClientFlow: Flow[(HttpRequest, Promise[HttpResponse]), (Try[HttpResponse], Promise[HttpResponse]), Http.HostConnectionPool] = {
     Http().cachedHostConnectionPool[Promise[HttpResponse]](
@@ -116,12 +117,22 @@ private[ethcube] class HttpConnector(node: EthereumProxySettings.Node)(
     resp pipeTo sender
   }
 
+  private def retryEthBlockNumber(num: Int): Future[EthBlockNumberRes] = for {
+    res ← sendMessage[EthBlockNumberRes]("eth_blockNumber") { Seq.empty }
+    r ← if (res.error.nonEmpty) {
+      throw new Exception(res.error.toString)
+    } else if (num - 1 > 0 && hex2BigInt(res.result).compare(BigInt(1)) <= 0) {
+      retryEthBlockNumber(num - 1)
+    } else {
+      Future.successful(res)
+    }
+  } yield r
+
+  private def hex2BigInt(s: String) = BigInt(s.replace("0x", ""), 16)
+
   def receive: Receive = {
-    case req: JsonRpcReq ⇒ post(req.json).map(JsonRpcRes(_)) pipeTo sender
-    case r: EthBlockNumberReq ⇒
-      sendMessage[EthBlockNumberRes]("eth_blockNumber") {
-        Seq.empty
-      }
+    case req: JsonRpcReq      ⇒ post(req.json).map(JsonRpcRes(_)) pipeTo sender
+    case r: EthBlockNumberReq ⇒ retryEthBlockNumber(RETRY_MAX)
     case r: EthGetBalanceReq ⇒
       sendMessage[EthGetBalanceRes]("eth_getBalance") {
         Seq(r.address, r.tag)
