@@ -25,7 +25,7 @@ import jnr.unixsocket._
 import org.loopring.ethcube.proto.data._
 import scalapb.json4s.JsonFormat
 
-private class IpcConnector(node: EthereumProxySettings.Node)
+private[ethcube] class IpcConnector(node: EthereumProxySettings.Node)
   extends Actor
   with ActorLogging {
 
@@ -51,6 +51,7 @@ private class IpcConnector(node: EthereumProxySettings.Node)
       } catch {
         case e: Throwable ⇒ log.error(e.getMessage)
       }
-
+    case req: ProtoBuf[_] ⇒
+      throw new Exception("not support by ipc connector")
   }
 }
