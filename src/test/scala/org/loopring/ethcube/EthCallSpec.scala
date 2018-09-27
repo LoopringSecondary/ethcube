@@ -30,7 +30,7 @@ import org.web3j.abi.FunctionEncoder
 import org.web3j.abi.datatypes.Address
 import akka.pattern.ask
 import akka.stream.ActorMaterializer
-import org.loopring.ethcube.proto.data.EthereumProxySettings
+import org.loopring.ethcube.proto.data._
 
 import scala.concurrent.Await
 
@@ -43,34 +43,52 @@ class EthCallSpec
 
   implicit val materializer = ActorMaterializer()
 
-  val node = EthereumProxySettings.Node(host = "192.168.0.200", port = 8545)
+  val settings = EthereumProxySettings(
+    poolSize = 10,
+    checkIntervalSeconds = 100000,
+    healthyThreshold = 0.5f,
+    nodes = Seq(EthereumProxySettings.Node(host = "192.168.0.200", port = 8545))
+  )
 
-  val proxy = system.actorOf(Props(new HttpConnector(node)), "connector")
+  val proxy = system.actorOf(Props(new EthereumProxy(settings)), "etheum_proxy")
 
   override def afterAll: Unit = {
     TestKit.shutdownActorSystem(system)
   }
 
-  "ethCallBalanceOf" in {
+  "eth_blockNumbe" in {
 
-    val data = abiFunction("balanceOf")(
-      Some("0x7b22713f2e818fad945af5a3618a2814f102cbe0")
-    )
-    println("data => " + functionToHex(data))
-    val args = TransactionParam()
-      .withTo("0xef68e7c694f40c8202821edf525de3782458639f")
-      .withData(data)
+    // val req = JsonRpcReq("""{"jsonrpc":"2.0","method":"eth_blockNumbe","params": [],"id":1}""")
 
-    val req = EthCallReq().withTag("latest").withParam(args)
 
-    val resFuture = proxy ? req
+    val resFuture = proxy ? EthBlockNumberReq()
     val res = Await.result(resFuture, timeout.duration)
 
     println(res.toString)
 
     info(res.toString)
-
   }
+
+  //  "ethCallBalanceOf" in {
+  //
+  //    val data = abiFunction("balanceOf")(
+  //      Some("0x7b22713f2e818fad945af5a3618a2814f102cbe0")
+  //    )
+  //    println("data => " + functionToHex(data))
+  //    val args = TransactionParam()
+  //      .withTo("0xef68e7c694f40c8202821edf525de3782458639f")
+  //      .withData(data)
+  //
+  //    val req = EthCallReq().withTag("latest").withParam(args)
+  //
+  //    val resFuture = proxy ? req
+  //    val res = Await.result(resFuture, timeout.duration)
+  //
+  //    println(res.toString)
+  //
+  //    info(res.toString)
+  //
+  //  }
 
   implicit def functionToHex: PartialFunction[org.web3j.abi.datatypes.Function, String] = {
     case f: org.web3j.abi.datatypes.Function ⇒

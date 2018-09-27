@@ -24,8 +24,8 @@ import org.loopring.ethcube.proto.data._
 import scala.collection.immutable.IndexedSeq
 
 class EthereumProxy(settings: EthereumProxySettings)(
-    implicit
-    materilizer: ActorMaterializer
+  implicit
+  materilizer: ActorMaterializer
 ) extends Actor
   with ActorLogging {
 
