@@ -47,6 +47,7 @@ private[ethcube] class HttpConnector(node: EthereumProxySettings.Node)(
   val DEBUG_TIMEOUT_STR = "5s"
   val DEBUG_TRACER = "callTracer"
   val ETH_CALL = "eth_call"
+  val RETRY_MAX = 5
 
   private val poolClientFlow: Flow[(HttpRequest, Promise[HttpResponse]), (Try[HttpResponse], Promise[HttpResponse]), Http.HostConnectionPool] = {
     Http().cachedHostConnectionPool[Promise[HttpResponse]](
@@ -108,38 +109,33 @@ private[ethcube] class HttpConnector(node: EthereumProxySettings.Node)(
       params = params
     )
     log.info(s"reqeust: ${org.json4s.native.Serialization.write(jsonRpc)}")
-    val resp = retry[T](2, jsonRpc)
+
+    val resp = for {
+      entity ← Marshal(jsonRpc).to[RequestEntity]
+      jsonStr ← post(entity)
+      _ = log.info(s"response: $jsonStr")
+      res = JsonFormat.fromJsonString[T](jsonStr)
+    } yield res
+
     resp pipeTo sender
   }
 
-  // todo
-  private def retry[T <: ProtoBuf[T]](num: Int, jsonRpc: JsonRpcReqWrapped): Future[T] = for {
-    entity ← Marshal(jsonRpc).to[RequestEntity]
-    jsonStr ← post(entity)
-    _ = log.info(s"response: $jsonStr")
-    res = JsonFormat.fromJsonString[T](jsonStr)
-  } yield res match {
-      case r: EthBlockNumberRes => {
-        if (r.error.isEmpty) throw new Exception(r.getError.toString)
-
-        if (hex2BigInt(r.result).compare(BigInt(1)) > 0) {
-          r
-        } else if (num - 1 > 0) {
-          retry(num - 1, jsonRpc)
-        } else {
-          throw new Exception("retry call ethBlockNumber error")
-        }
-      }
-  }
+  private def retryEthBlockNumber(num: Int): Future[EthBlockNumberRes] = for {
+    res ← sendMessage[EthBlockNumberRes]("eth_blockNumber") { Seq.empty }
+    r ← if (res.error.nonEmpty) {
+      throw new Exception(res.error.toString)
+    } else if (num - 1 > 0 && hex2BigInt(res.result).compare(BigInt(1)) <= 0) {
+      retryEthBlockNumber(num - 1)
+    } else {
+      Future.successful(res)
+    }
+  } yield r
 
   private def hex2BigInt(s: String) = BigInt(s.replace("0x", ""), 16)
 
   def receive: Receive = {
-    case req: JsonRpcReq ⇒ post(req.json).map(JsonRpcRes(_)) pipeTo sender
-    case r: EthBlockNumberReq ⇒
-      sendMessage[EthBlockNumberRes]("eth_blockNumber") {
-        Seq.empty
-      }
+    case req: JsonRpcReq      ⇒ post(req.json).map(JsonRpcRes(_)) pipeTo sender
+    case r: EthBlockNumberReq ⇒ retryEthBlockNumber(RETRY_MAX)
     case r: EthGetBalanceReq ⇒
       sendMessage[EthGetBalanceRes]("eth_getBalance") {
         Seq(r.address, r.tag)
