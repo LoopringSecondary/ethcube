@@ -30,22 +30,37 @@ import org.web3j.abi.FunctionEncoder
 import org.web3j.abi.datatypes.Address
 import akka.pattern.ask
 import akka.stream.ActorMaterializer
+import com.typesafe.config.ConfigFactory
 import org.loopring.ethcube.proto.data.EthereumProxySettings
 
 import scala.concurrent.Await
 
 class EthCallSpec
   extends TestKit(ActorSystem("MySpec"))
-    with ImplicitSender
-    with WordSpecLike
-    with Matchers
-    with BeforeAndAfterAll {
+  with ImplicitSender
+  with WordSpecLike
+  with Matchers
+  with BeforeAndAfterAll {
 
   implicit val materializer = ActorMaterializer()
+  import collection.JavaConverters._
 
-  val node = EthereumProxySettings.Node(host = "192.168.0.200", port = 8545)
+  val config = ConfigFactory.load()
+  val settings: EthereumProxySettings = {
+    val sub = config.getConfig("ethereum-proxy")
 
-  val proxy = system.actorOf(Props(new HttpConnector(node)), "connector")
+    EthereumProxySettings(
+      sub.getInt("pool-size"),
+      sub.getInt("check-interval-seconds"),
+      sub.getDouble("healthy-threshold").toFloat,
+      sub.getConfigList("nodes").asScala map { c ⇒
+        EthereumProxySettings
+          .Node(c.getString("host"), c.getInt("port"), c.getString("ipcpath"))
+      }
+    )
+  }
+
+  val proxy = system.actorOf(Props(new EthereumProxy(settings)), "ethereum_proxy")
 
   override def afterAll: Unit = {
     TestKit.shutdownActorSystem(system)
@@ -54,11 +69,11 @@ class EthCallSpec
   "ethCallBalanceOf" in {
 
     val data = abiFunction("balanceOf")(
-      Some("0x7b22713f2e818fad945af5a3618a2814f102cbe0")
+      Some("0x1b978a1d302335a6f2ebe4b8823b5e17c3c84135")
     )
     println("data => " + functionToHex(data))
     val args = TransactionParam()
-      .withTo("0xef68e7c694f40c8202821edf525de3782458639f")
+      .withTo("0xcd36128815ebe0b44d0374649bad2721b8751bef")
       .withData(data)
 
     val req = EthCallReq().withTag("latest").withParam(args)
@@ -83,7 +98,7 @@ class EthCallSpec
     import scala.collection.JavaConverters._
     val types: List[org.web3j.abi.datatypes.Type[_]] = owner match {
       case Some(o) ⇒ List(new Address(o))
-      case _ ⇒ List.empty[Address]
+      case _       ⇒ List.empty[Address]
     }
 
     new org.web3j.abi.datatypes.Function(
