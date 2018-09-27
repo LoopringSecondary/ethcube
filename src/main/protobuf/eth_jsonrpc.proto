@@ -163,10 +163,16 @@ message TransactionParam {
 //eth_blockNumber
 message EthBlockNumberReq {}
 
+message EthResError {
+    int32 code  = 1;
+    string error = 2;
+}
+
 message EthBlockNumberRes {
     int32 id = 1;
     string jsonrpc = 2;
     string result = 3;
+    EthResError error = 4;
 }
 
 message EthCallReq {
@@ -178,6 +184,7 @@ message EthCallRes {
     int32 id = 1;
     string jsonrpc = 2;
     string result = 3;
+    EthResError error = 4;
 }
 
 // eth_getBalance
@@ -189,6 +196,7 @@ message EthGetBalanceRes {
     int32 id = 1;
     string jsonrpc = 2;
     string result = 3;
+    EthResError error = 4;
 }
 
 // eth_getTransactionByHash
@@ -199,6 +207,7 @@ message GetTransactionByHashRes {
     int32 id = 1;
     string jsonrpc = 2;
     Transaction result = 3;
+    EthResError error = 4;
 }
 
 // eth_getTransactionReceipt
@@ -209,6 +218,7 @@ message GetTransactionReceiptRes {
     int32 id = 1;
     string jsonrpc = 2;
     TransactionReceipt result = 3;
+    EthResError error = 4;
 }
 
 // eth_getBlockByNumber
@@ -219,6 +229,7 @@ message GetBlockWithTxHashByNumberRes {
     int32 id = 1;
     string jsonrpc = 2;
     BlockWithTxHash result = 3;
+    EthResError error = 4;
 }
 
 message GetBlockWithTxObjectByNumberReq {
@@ -228,6 +239,7 @@ message GetBlockWithTxObjectByNumberRes {
     int32 id = 1;
     string jsonrpc = 2;
     BlockWithTxObject result = 3;
+    EthResError error = 4;
 }
 
 // eth_getBlockByHash
@@ -238,6 +250,7 @@ message GetBlockWithTxHashByHashRes {
     int32 id = 1;
     string jsonrpc = 2;
     BlockWithTxHash result = 3;
+    EthResError error = 4;
 }
 
 message GetBlockWithTxObjectByHashReq {
@@ -247,17 +260,18 @@ message GetBlockWithTxObjectByHashRes {
     int32 id = 1;
     string jsonrpc = 2;
     BlockWithTxObject result = 3;
+    EthResError error = 4;
 }
 
 // debug_traceTransaction
 message TraceTransactionReq {
     string txhash = 1;
 }
-
 message TraceTransactionRes {
     int32 id = 1;
     string jsonrpc = 2;
     TraceTransaction result = 3;
+    EthResError error = 4;
 }
 
 // eth_estimateGas
@@ -265,41 +279,41 @@ message GetEstimatedGasReq {
     string to = 1;
     string data = 2;
 }
-
 message GetEstimatedGasRes {
     int32 id = 1;
     string jsonrpc = 2;
     string result = 3;
+    EthResError error = 4;
 }
 
 message GetNonceReq {
     string owner = 1;
     string tag = 2;
 }
-
 message GetNonceRes {
     int32 id = 1;
     string jsonrpc = 2;
     string result = 3;
+    EthResError error = 4;
 }
 
 message GetBlockTransactionCountReq {
     string block_hash = 1;
 }
-
 message GetBlockTransactionCountRes {
     int32 id = 1;
     string jsonrpc = 2;
     string result = 3;
+    EthResError error = 4;
 }
 
 message SendRawTransactionReq {
     string data = 1;
 }
-
 message SendRawTransactionRes {
     int32 id = 1;
     string jsonrpc = 2;
     string result = 3;
+    EthResError error = 4;
 }
 

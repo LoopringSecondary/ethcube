@@ -108,13 +108,31 @@ private[ethcube] class HttpConnector(node: EthereumProxySettings.Node)(
       params = params
     )
     log.info(s"reqeust: ${org.json4s.native.Serialization.write(jsonRpc)}")
-    val resp = for {
-      entity ← Marshal(jsonRpc).to[RequestEntity]
-      jsonStr ← post(entity)
-      _ = log.info(s"response: $jsonStr")
-    } yield JsonFormat.fromJsonString[T](jsonStr)
+    val resp = retry[T](2, jsonRpc)
     resp pipeTo sender
   }
+
+  // todo
+  private def retry[T <: ProtoBuf[T]](num: Int, jsonRpc: JsonRpcReqWrapped): Future[T] = for {
+    entity ← Marshal(jsonRpc).to[RequestEntity]
+    jsonStr ← post(entity)
+    _ = log.info(s"response: $jsonStr")
+    res = JsonFormat.fromJsonString[T](jsonStr)
+  } yield res match {
+      case r: EthBlockNumberRes => {
+        if (r.error.isEmpty) throw new Exception(r.getError.toString)
+
+        if (hex2BigInt(r.result).compare(BigInt(1)) > 0) {
+          r
+        } else if (num - 1 > 0) {
+          retry(num - 1, jsonRpc)
+        } else {
+          throw new Exception("retry call ethBlockNumber error")
+        }
+      }
+  }
+
+  private def hex2BigInt(s: String) = BigInt(s.replace("0x", ""), 16)
 
   def receive: Receive = {
     case req: JsonRpcReq ⇒ post(req.json).map(JsonRpcRes(_)) pipeTo sender

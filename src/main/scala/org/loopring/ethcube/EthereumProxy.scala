@@ -18,10 +18,8 @@ package org.loopring.ethcube
 
 import akka.actor._
 import akka.routing._
-import akka.util.Timeout
 import akka.stream.ActorMaterializer
 import org.loopring.ethcube.proto.data._
-import scala.collection.immutable.IndexedSeq
 
 class EthereumProxy(settings: EthereumProxySettings)(
     implicit
