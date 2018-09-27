@@ -32,5 +32,4 @@ package object accessor {
   implicit val materializer = ActorMaterializer()
   implicit val timeout = Timeout(100 second)
 
-  val connector = system.actorOf(Props(new HttpConnector(node)), "connector")
 }

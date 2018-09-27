@@ -24,7 +24,7 @@ import akka.testkit.TestKit
 import org.scalatest.Matchers
 import org.scalatest.WordSpecLike
 import akka.actor.{ ActorSystem, Props }
-import org.loopring.accessor.{ connector, timeout }
+import org.loopring.accessor._
 import org.loopring.ethcube.proto.eth_jsonrpc._
 import org.web3j.abi.FunctionEncoder
 import org.web3j.abi.datatypes.Address
@@ -36,10 +36,10 @@ import scala.concurrent.Await
 
 class EthCallSpec
   extends TestKit(ActorSystem("MySpec"))
-  with ImplicitSender
-  with WordSpecLike
-  with Matchers
-  with BeforeAndAfterAll {
+    with ImplicitSender
+    with WordSpecLike
+    with Matchers
+    with BeforeAndAfterAll {
 
   implicit val materializer = ActorMaterializer()
 
@@ -83,7 +83,7 @@ class EthCallSpec
     import scala.collection.JavaConverters._
     val types: List[org.web3j.abi.datatypes.Type[_]] = owner match {
       case Some(o) ⇒ List(new Address(o))
-      case _       ⇒ List.empty[Address]
+      case _ ⇒ List.empty[Address]
     }
 
     new org.web3j.abi.datatypes.Function(
