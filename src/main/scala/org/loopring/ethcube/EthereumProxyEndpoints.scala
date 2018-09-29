@@ -43,8 +43,8 @@ private object EthereumProxyEndpoints {
 }
 
 private[ethcube] class EthereumProxyEndpoints(ethereumProxy: ActorRef)(
-  implicit
-  system: ActorSystem
+    implicit
+    system: ActorSystem
 ) extends Json4sSupport {
 
   implicit val context = system.dispatcher
@@ -133,7 +133,7 @@ private[ethcube] class EthereumProxyEndpoints(ethereumProxy: ActorRef)(
     complete(f)
   }
 
-  private def routeContext[P: Manifest, T <: ProtoBuf[_] : Manifest] = {
+  private def routeContext[P: Manifest, T <: ProtoBuf[_]: Manifest] = {
     entity(as[P]) { req ⇒
       // 直接mapTo不会自动转json
       val f = (ethereumProxy ? req).mapTo[T].map(toResponse)

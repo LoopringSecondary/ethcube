@@ -24,10 +24,10 @@ import org.json4s.native.JsonMethods._
 import org.json4s.DefaultFormats
 
 private[ethcube] case class JsonRpcReqWrapped(
-  id: Int,
-  jsonrpc: String = "2.0",
-  method: String,
-  params: Any
+    id: Int,
+    jsonrpc: String = "2.0",
+    method: String,
+    params: Any
 ) {
   self ⇒
   implicit val formats = Serialization.formats(NoTypeHints)
@@ -38,10 +38,10 @@ private[ethcube] case class JsonRpcReqWrapped(
 }
 
 private[ethcube] case class JsonRpcResWrapped(
-  id: Any,
-  jsonrpc: String = "2.0",
-  result: Any,
-  error: Option[JsonRpcErr]
+    id: Any,
+    jsonrpc: String = "2.0",
+    result: Any,
+    error: Option[JsonRpcErr]
 )
 
 private[ethcube] object JsonRpcResWrapped {

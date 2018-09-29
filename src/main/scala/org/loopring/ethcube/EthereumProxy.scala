@@ -22,8 +22,8 @@ import akka.stream.ActorMaterializer
 import org.loopring.ethcube.proto.data._
 
 class EthereumProxy(settings: EthereumProxySettings)(
-  implicit
-  materilizer: ActorMaterializer
+    implicit
+    materilizer: ActorMaterializer
 ) extends Actor
   with ActorLogging {
 

@@ -60,6 +60,14 @@ class EthCallSpec
 
     // val req = JsonRpcReq("""{"jsonrpc":"2.0","method":"eth_blockNumbe","params": [],"id":1}""")
 
+    import org.web3j.protocol.Web3j
+    import org.web3j.protocol.core.methods.response.Web3ClientVersion
+    import org.web3j.protocol.http.HttpService
+    val web3 = Web3j.build(new HttpService) // defaults to http://localhost:8545/
+
+    val web3ClientVersion = web3.web3ClientVersion.send
+    val clientVersion = web3ClientVersion.getWeb3ClientVersion
+
 
     val resFuture = proxy ? EthBlockNumberReq()
     val res = Await.result(resFuture, timeout.duration)

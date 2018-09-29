@@ -27,7 +27,7 @@ import scalapb.json4s.JsonFormat
 
 private[ethcube] class IpcConnector(node: EthereumProxySettings.Node)
   extends Actor
-    with ActorLogging {
+  with ActorLogging {
 
   val address = new UnixSocketAddress(new File(node.ipcPath))
   val channel = UnixSocketChannel.open(address)
