@@ -27,13 +27,14 @@ import akka.pattern.pipe
 import akka.http.scaladsl.marshalling.Marshal
 import de.heikoseeberger.akkahttpjson4s.Json4sSupport
 import org.json4s._
+import org.json4s.native.JsonMethods.parse
 import org.loopring.ethcube.proto.data._
-import scalapb.json4s.JsonFormat
 import org.loopring.ethcube.proto.eth_jsonrpc._
+import scalapb.json4s.JsonFormat
 
 private[ethcube] class HttpConnector(node: EthereumProxySettings.Node)(
-  implicit
-  val materilizer: ActorMaterializer
+    implicit
+    val materilizer: ActorMaterializer
 ) extends Actor
   with ActorLogging
   with Json4sSupport {
@@ -47,7 +48,8 @@ private[ethcube] class HttpConnector(node: EthereumProxySettings.Node)(
   val DEBUG_TIMEOUT_STR = "5s"
   val DEBUG_TRACER = "callTracer"
   val ETH_CALL = "eth_call"
-  val RETRY_MAX = 5
+
+  val emptyError = EthResError(code = 500, error = "result is empty")
 
   private val poolClientFlow: Flow[(HttpRequest, Promise[HttpResponse]), (Try[HttpResponse], Promise[HttpResponse]), Http.HostConnectionPool] = {
     Http().cachedHostConnectionPool[Promise[HttpResponse]](
@@ -61,13 +63,13 @@ private[ethcube] class HttpConnector(node: EthereumProxySettings.Node)(
   private val queue: SourceQueueWithComplete[(HttpRequest, Promise[HttpResponse])] =
     Source
       .queue[(HttpRequest, Promise[HttpResponse])](
-      100,
-      OverflowStrategy.backpressure
-    )
+        100,
+        OverflowStrategy.backpressure
+      )
       .via(poolClientFlow)
       .toMat(Sink.foreach({
         case (Success(resp), p) ⇒ p.success(resp)
-        case (Failure(e), p) ⇒ p.failure(e)
+        case (Failure(e), p)    ⇒ p.failure(e)
       }))(Keep.left)
       .run()(materilizer)
 
@@ -98,10 +100,7 @@ private[ethcube] class HttpConnector(node: EthereumProxySettings.Node)(
     } yield jsonStr
   }
 
-  private def sendMessage[T <: ProtoBuf[T]](method: String)(params: Seq[Any])(
-    implicit
-    c: scalapb.GeneratedMessageCompanion[T]
-  ): Future[T] = {
+  private def sendMessage(method: String)(params: Seq[Any]): Future[String] = {
     val jsonRpc = JsonRpcReqWrapped(
       id = Random.nextInt(100),
       jsonrpc = "2.0",
@@ -109,86 +108,188 @@ private[ethcube] class HttpConnector(node: EthereumProxySettings.Node)(
       params = params
     )
     log.info(s"reqeust: ${org.json4s.native.Serialization.write(jsonRpc)}")
-    val resp = for {
+
+    for {
       entity ← Marshal(jsonRpc).to[RequestEntity]
       jsonStr ← post(entity)
       _ = log.info(s"response: $jsonStr")
-    } yield JsonFormat.fromJsonString[T](jsonStr)
-    resp pipeTo sender
+    } yield jsonStr
+
   }
 
-  private def retryEthBlockNumber(num: Int): Future[EthBlockNumberRes] = for {
-    res ← sendMessage[EthBlockNumberRes]("eth_blockNumber") { Seq.empty }
-    r ← if (res.error.nonEmpty) {
-      throw new Exception(res.error.toString)
-    } else if (num - 1 > 0 && hex2BigInt(res.result).compare(BigInt(1)) <= 0) {
-      retryEthBlockNumber(num - 1)
-    } else {
-      Future.successful(res)
-    }
-  } yield r
+  private def toResponseWrapped: PartialFunction[String, JsonRpcResWrapped] = {
+    case json: String ⇒ parse(json).extract[JsonRpcResWrapped]
+  }
+
+  private def checkResponseWrapped: PartialFunction[JsonRpcResWrapped, Boolean] = {
+    case res: JsonRpcResWrapped ⇒ res.result.toString.isEmpty
+  }
 
   private def hex2BigInt(s: String) = BigInt(s.replace("0x", ""), 16)
 
   def receive: Receive = {
-    case req: JsonRpcReq      ⇒ post(req.json).map(JsonRpcRes(_)) pipeTo sender
-    case r: EthBlockNumberReq ⇒ retryEthBlockNumber(RETRY_MAX)
+    case req: JsonRpcReq ⇒ post(req.json).map(JsonRpcRes(_)) pipeTo sender
+    case r: EthBlockNumberReq ⇒
+      sendMessage("eth_blockNumber") {
+        Seq.empty
+      } map { json ⇒
+        (checkResponseWrapped compose toResponseWrapped)(json) match {
+          case true ⇒
+            EthBlockNumberRes().withJsonrpc("2.0")
+              .withError(emptyError)
+          case _ ⇒ JsonFormat.fromJsonString[EthBlockNumberRes](json)
+        }
+      } pipeTo sender
+
     case r: EthGetBalanceReq ⇒
-      sendMessage[EthGetBalanceRes]("eth_getBalance") {
+      sendMessage("eth_getBalance") {
         Seq(r.address, r.tag)
-      }
+      } map { json ⇒
+        (checkResponseWrapped compose toResponseWrapped)(json) match {
+          case true ⇒
+            EthGetBalanceRes().withJsonrpc("2.0")
+              .withError(emptyError)
+          case _ ⇒ JsonFormat.fromJsonString[EthGetBalanceRes](json)
+
+        }
+      } pipeTo sender
+
     case r: GetTransactionByHashReq ⇒
-      sendMessage[GetTransactionByHashRes]("eth_getTransactionByHash") {
+      sendMessage("eth_getTransactionByHash") {
         Seq(r.hash)
-      }
+      } map { json ⇒
+        (checkResponseWrapped compose toResponseWrapped)(json) match {
+          case true ⇒
+            GetTransactionByHashRes().withJsonrpc("2.0")
+              .withError(emptyError)
+          case _ ⇒ JsonFormat.fromJsonString[GetTransactionByHashRes](json)
+        }
+      } pipeTo sender
+
     case r: GetTransactionReceiptReq ⇒
-      sendMessage[GetTransactionReceiptRes]("eth_getTransactionReceipt") {
+      sendMessage("eth_getTransactionReceipt") {
         Seq(r.hash)
-      }
+      } map { json ⇒
+        (checkResponseWrapped compose toResponseWrapped)(json) match {
+          case true ⇒
+            GetTransactionReceiptRes().withJsonrpc("2.0")
+              .withError(emptyError)
+          case _ ⇒ JsonFormat.fromJsonString[GetTransactionReceiptRes](json)
+        }
+      } pipeTo sender
     case r: GetBlockWithTxHashByNumberReq ⇒
-      sendMessage[GetBlockWithTxHashByNumberRes]("eth_getBlockByNumber") {
+      sendMessage("eth_getBlockByNumber") {
         Seq(r.blockNumber, false)
-      }
+      } map { json ⇒
+        (checkResponseWrapped compose toResponseWrapped)(json) match {
+          case true ⇒
+            GetBlockWithTxHashByNumberRes().withJsonrpc("2.0")
+              .withError(emptyError)
+          case _ ⇒ JsonFormat.fromJsonString[GetBlockWithTxHashByNumberRes](json)
+        }
+      } pipeTo sender
     case r: GetBlockWithTxObjectByNumberReq ⇒
-      sendMessage[GetBlockWithTxObjectByNumberRes]("eth_getBlockByNumber") {
+      sendMessage("eth_getBlockByNumber") {
         Seq(r.blockNumber, true)
-      }
+      } map { json ⇒
+        (checkResponseWrapped compose toResponseWrapped)(json) match {
+          case true ⇒
+            GetBlockWithTxObjectByNumberRes().withJsonrpc("2.0")
+              .withError(emptyError)
+          case _ ⇒ JsonFormat.fromJsonString[GetBlockWithTxObjectByNumberRes](json)
+
+        }
+      } pipeTo sender
     case r: GetBlockWithTxHashByHashReq ⇒
-      sendMessage[GetBlockWithTxHashByHashRes]("eth_getBlockByHash") {
+      sendMessage("eth_getBlockByHash") {
         Seq(r.blockHash, false)
-      }
+      } map { json ⇒
+        (checkResponseWrapped compose toResponseWrapped)(json) match {
+          case true ⇒
+            GetBlockWithTxHashByHashRes().withJsonrpc("2.0")
+              .withError(emptyError)
+          case _ ⇒ JsonFormat.fromJsonString[GetBlockWithTxHashByHashRes](json)
+        }
+      } pipeTo sender
     case r: GetBlockWithTxObjectByHashReq ⇒
-      sendMessage[GetBlockWithTxObjectByHashRes]("eth_getBlockByHash") {
+      sendMessage("eth_getBlockByHash") {
         Seq(r.blockHash, true)
-      }
+      } map { json ⇒
+        (checkResponseWrapped compose toResponseWrapped)(json) match {
+          case true ⇒
+            GetBlockWithTxObjectByHashRes().withJsonrpc("2.0")
+              .withError(emptyError)
+          case _ ⇒ JsonFormat.fromJsonString[GetBlockWithTxObjectByHashRes](json)
+        }
+      } pipeTo sender
     case r: TraceTransactionReq ⇒
-      sendMessage[TraceTransactionRes]("debug_traceTransaction") {
+      sendMessage("debug_traceTransaction") {
         val debugParams = DebugParams(DEBUG_TIMEOUT_STR, DEBUG_TRACER)
         Seq(r.txhash, debugParams)
-      }
+      } map { json ⇒
+        (checkResponseWrapped compose toResponseWrapped)(json) match {
+          case true ⇒
+            TraceTransactionRes().withJsonrpc("2.0")
+              .withError(emptyError)
+          case _ ⇒ JsonFormat.fromJsonString[TraceTransactionRes](json)
+        }
+      } pipeTo sender
     case r: SendRawTransactionReq ⇒
-      sendMessage[SendRawTransactionRes]("eth_sendRawTransaction") {
+      sendMessage("eth_sendRawTransaction") {
         Seq(r.data)
-      }
+      } map { json ⇒
+        (checkResponseWrapped compose toResponseWrapped)(json) match {
+          case true ⇒
+            SendRawTransactionRes().withJsonrpc("2.0")
+              .withError(emptyError)
+          case _ ⇒ JsonFormat.fromJsonString[SendRawTransactionRes](json)
+        }
+      } pipeTo sender
     case r: GetEstimatedGasReq ⇒
-      sendMessage[GetEstimatedGasRes]("eth_estimateGas") {
+      sendMessage("eth_estimateGas") {
         val args = TransactionParam().withTo(r.to).withData(r.data)
         Seq(args)
-      }
+      } map { json ⇒
+        (checkResponseWrapped compose toResponseWrapped)(json) match {
+          case true ⇒
+            GetEstimatedGasRes().withJsonrpc("2.0")
+              .withError(emptyError)
+          case _ ⇒ JsonFormat.fromJsonString[GetEstimatedGasRes](json)
+        }
+      } pipeTo sender
     case r: GetNonceReq ⇒
-      sendMessage[GetNonceRes]("eth_getTransactionCount") {
+      sendMessage("eth_getTransactionCount") {
         Seq(r.owner, r.tag)
-      }
+      } map { json ⇒
+        (checkResponseWrapped compose toResponseWrapped)(json) match {
+          case true ⇒
+            GetNonceRes().withJsonrpc("2.0")
+              .withError(emptyError)
+          case _ ⇒ JsonFormat.fromJsonString[GetNonceRes](json)
+        }
+      } pipeTo sender
     case r: GetBlockTransactionCountReq ⇒
-      sendMessage[GetBlockTransactionCountRes](
-        "eth_getBlockTransactionCountByHash"
-      ) {
+      sendMessage("eth_getBlockTransactionCountByHash") {
         Seq(r.blockHash)
-      }
+      } map { json ⇒
+        (checkResponseWrapped compose toResponseWrapped)(json) match {
+          case true ⇒
+            GetBlockTransactionCountRes().withJsonrpc("2.0")
+              .withError(emptyError)
+          case _ ⇒ JsonFormat.fromJsonString[GetBlockTransactionCountRes](json)
+        }
+      } pipeTo sender
     case r: EthCallReq ⇒
-      sendMessage[EthCallRes]("eth_call") {
+      sendMessage("eth_call") {
         Seq(r.param, r.tag)
-      }
+      } map { json ⇒
+        (checkResponseWrapped compose toResponseWrapped)(json) match {
+          case true ⇒
+            EthCallRes().withJsonrpc("2.0")
+              .withError(emptyError)
+          case _ ⇒ JsonFormat.fromJsonString[EthCallRes](json)
+        }
+      } pipeTo sender
   }
 
 }
@@ -198,7 +299,7 @@ private case class DebugParams(timeout: String, tracer: String)
 private class EmptyValueSerializer
   extends CustomSerializer[String](
     _ ⇒
-      ( {
+      ({
         case JNull ⇒ ""
       }, {
         case "" ⇒ JNothing
