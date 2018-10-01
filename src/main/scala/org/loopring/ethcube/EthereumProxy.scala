@@ -18,16 +18,14 @@ package org.loopring.ethcube
 
 import akka.actor._
 import akka.routing._
-import akka.util.Timeout
 import akka.stream.ActorMaterializer
 import org.loopring.ethcube.proto.data._
-import scala.collection.immutable.IndexedSeq
 
 class EthereumProxy(settings: EthereumProxySettings)(
     implicit
     materilizer: ActorMaterializer
-)
-  extends Actor with ActorLogging {
+) extends Actor
+  with ActorLogging {
 
   private val connectorGroups: Seq[ActorRef] = settings.nodes.zipWithIndex.map {
     case (node, index) ⇒
@@ -48,12 +46,14 @@ class EthereumProxy(settings: EthereumProxySettings)(
   )
 
   private val manager = context.actorOf(
-    Props(new ConnectionManager(
-      requestRouterActor,
-      connectorGroups,
-      settings.checkIntervalSeconds,
-      settings.healthyThreshold
-    )),
+    Props(
+      new ConnectionManager(
+        requestRouterActor,
+        connectorGroups,
+        settings.checkIntervalSeconds,
+        settings.healthyThreshold
+      )
+    ),
     "ethereum_connector_manager"
   )
 
@@ -61,5 +61,7 @@ class EthereumProxy(settings: EthereumProxySettings)(
     case m: JsonRpcReq ⇒
       // 路由为空 这里是 timeout
       requestRouterActor.forward(m)
+    case req: ProtoBuf[_] ⇒
+      requestRouterActor.forward(req)
   }
 }

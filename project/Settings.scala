@@ -49,8 +49,8 @@ object Settings {
     startYear := Some(2018),
     licenses += ("Apache-2.0", new URL("https://www.apache.org/licenses/LICENSE-2.0.txt")),
     shellPrompt in ThisBuild := { state => "sbt (%s)> ".format(Project.extract(state).currentProject.id) },
-    publishArtifact in (Compile, packageSrc) := false,
-    publishArtifact in (Compile, packageDoc) := true,
+    publishArtifact in(Compile, packageSrc) := false,
+    publishArtifact in(Compile, packageDoc) := true,
     publishTo := Some(
       if (isSnapshot.value) Opts.resolver.sonatypeSnapshots
       else Opts.resolver.sonatypeStaging),
